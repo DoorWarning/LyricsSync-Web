@@ -2,6 +2,12 @@
   <img src="./LOGO/animated_result.svg" alt="LyricsSync Logo" width="400"/>
 </div>
 
+<h3 align="center">
+  <a href="https://lyrics-sync-client.vercel.app/">
+    🚀 게임 플레이하러 가기
+  </a>
+</h3>
+
 # LyricsSync (엉뚱한 가사 퀴즈)
 
 `LyricsSync`는 엉뚱하게 번역된 노래 가사를 보고 원곡을 맞히는 실시간 멀티플레이 퀴즈 게임입니다. 이 레포지토리는 게임 클라이언트, 게임 서버, 관리자 대시보드를 모두 포함하는 모노레포(monorepo)입니다.
