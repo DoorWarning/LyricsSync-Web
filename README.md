@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./LOGO/original.svg" alt="LyricsSync Logo" width="400"/>
+  <img src="./LOGO/animated_result.svg" alt="LyricsSync Logo" width="400"/>
 </div>
 
 # LyricsSync (엉뚱한 가사 퀴즈)
