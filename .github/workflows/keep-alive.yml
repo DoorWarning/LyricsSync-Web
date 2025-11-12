@@ -3,7 +3,7 @@ name: Keep Render Service Awake
 
 on:
   schedule:
-    # 14분마다 작업을 실행합니다. (Render의 15분 슬립 타이머 리셋)
+    # 10분마다 작업을 실행합니다.
     # cron 문법: '분 시 일 월 요일'
     - cron: '*/10 * * * *'
   
