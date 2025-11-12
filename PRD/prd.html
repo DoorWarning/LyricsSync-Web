@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>LyricsSync &#xc6f9;&#xc11c;&#xbe44;&#xc2a4; &#xae30;&#xd68d;&#xc11c;&lpar;PRD&rpar;</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+</style>
+            
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="lyricssync-웹서비스-기획서prd">LyricsSync 웹서비스 기획서(PRD)</h1>
+<h4 id="1-프로젝트-개요">1. 프로젝트 개요</h4>
+<ul>
+<li><strong>목표 (Goal):</strong> 기존 안드로이드 게임을 웹으로 확장, 설치가 필요 없는 링크 공유만으로 친구들과 빠르고 가볍게 즐길 수 있는 실시간 멀티플레이 퀴즈 게임을 제공한다.</li>
+<li><strong>문제 정의 (Problem Definition):</strong>
+<ul>
+<li>기존 노래 퀴즈 게임은 앱 설치가 필요해 접근성이 떨어진다.</li>
+<li>친구들과 실시간으로 파티처럼 즐길 수 있는 가벼운 웹 기반 경쟁 게임이 부족하다.</li>
+<li>&quot;이상하게 번역된 가사&quot;라는 독특하고 유머러스한 퀴즈 소재를 활용한 서비스가 없다.</li>
+</ul>
+</li>
+<li><strong>타깃 사용자 (Target User):</strong>
+<ul>
+<li>Gartic Phone처럼 친구들과 디스코드나 카카오톡으로 모여 온라인 파티 게임을 즐기는 10대~20대 그룹.</li>
+<li><strong>페르소나:</strong> 대학생 김OO (21세), 공강 시간에 친구들과 디코방에 모여 있으며, 가볍게 10~20분간 즐길 내기 게임을 찾고 있음.</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-서비스-콘셉트">2. 서비스 콘셉트</h4>
+<ul>
+<li><strong>서비스명:</strong> LyricsSync</li>
+<li><strong>핵심 가치 (Core Value):</strong>
+<ul>
+<li><strong>즉시성 (Accessibility):</strong> 설치 없이 링크 클릭 즉시 게임방 참여.</li>
+<li><strong>재미 (Fun):</strong> 황당하게 번역된 가사가 주는 유머와 퀴즈의 결합.</li>
+<li><strong>경쟁 (Competition):</strong> 실시간 정답 판정 및 점수 경쟁.</li>
+</ul>
+</li>
+<li><strong>메인 시나리오 (Main User Scenario):</strong>
+<ul>
+<li><strong>방장 (Creator):</strong> 게임방 생성 → 방 링크 복사 → 친구들에게 공유 → 게임 시작.</li>
+<li><strong>참가자 (Consumer):</strong> 링크 접속 → 닉네임 입력 → 게임 대기 → 퀴즈(번역 가사) 확인 → 채팅/입력창에 정답 입력 → 실시간 점수 확인 → 최종 순위 확인.</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-ux-설계">3. UX 설계</h4>
+<ul>
+<li><strong>유저 여정 (User Journey Map):</strong>
+<ul>
+<li><strong>인식:</strong> 친구에게 카톡/디스코드로 게임 링크를 받는다.</li>
+<li><strong>탐색:</strong> 랜딩 페이지에서 닉네임 입력 후 '방 참여' 버튼을 누른다.</li>
+<li><strong>행동:</strong> 퀴즈가 시작되면 번역된 가사를 보고, 채팅창/입력창에 정답을 입력한다. 실시간으로 갱신되는 점수판을 확인한다.</li>
+<li><strong>피드백:</strong> 라운드별/최종 순위를 확인하고, '다시하기' 버튼을 누른다.</li>
+</ul>
+</li>
+<li><strong>와이어프레임 (Wireframe):</strong>
+<ul>
+<li>Figma  등을 사용해 Gartic Phone처럼 UI/UX를 설계합니다.</li>
+<li><strong>필요 화면:</strong> 1. 메인 (방 생성/참여), 2. 게임 대기실 (링크 공유, 유저 목록), 3. 퀴즈 진행 (번역 가사, 타이머, 입력창, 점수판), 4. 최종 결과.</li>
+</ul>
+</li>
+</ul>
+<h4 id="4-기능-정의">4. 기능 정의</h4>
+<ul>
+<li><strong>P1 (핵심):</strong>
+<ul>
+<li>게임방 생성 및 링크 공유</li>
+<li>게임방 참가 (닉네임 입력)</li>
+<li>DB에서 가져온 가사를 번역 API로 처리 (혹은 미리 번역해 DB에 저장)</li>
+<li>번역된 가사 퀴즈 실시간 노출 (<a href="http://Socket.IO">Socket.IO</a>)</li>
+<li>유저 정답 실시간 판정</li>
+<li>유저별 점수 실시간 계산 및 순위표 업데이트</li>
+</ul>
+</li>
+<li><strong>P2 (중요):</strong>
+<ul>
+<li>게임 내 실시간 채팅</li>
+<li>라운드별 타이머 기능</li>
+<li>가사 DB 관리 기능 (운영자용)</li>
+<li>제목 자동완성 기능(DB상에 있는 제목)</li>
+</ul>
+</li>
+<li><strong>P3 (보완):</strong>
+<ul>
+<li>힌트 기능 (예: 초성 힌트)</li>
+<li>유저 프로필/전적 시스템</li>
+</ul>
+</li>
+</ul>
+<h4 id="5-기술-구조-및-개발-계획">5. 기술 구조 및 개발 계획</h4>
+<ul>
+<li><strong>기술 스택 (Tech Stack) :</strong>
+<ul>
+<li><strong>Frontend:</strong> <strong>React + Vite</strong> (UI 및 사용자 인터랙션)</li>
+<li><strong>Backend:</strong> <strong>Node.js + Express</strong> (비즈니스 로직)</li>
+<li><strong>Real-time:</strong> <strong><a href="http://Socket.IO">Socket.IO</a></strong> (실시간 퀴즈 전송, 정답/점수 동기화)</li>
+<li><strong>Database:</strong> <strong>MongoDB</strong> 또는 <strong>PostgreSQL</strong> (가사 데이터, 유저 정보 관리)</li>
+<li><strong>Deployment:</strong> <strong>Vercel</strong> (Frontend), <strong>AWS/GCP/Supabase</strong> (Backend/DB)</li>
+</ul>
+</li>
+<li><strong>API 설계:</strong>
+<ul>
+<li>이 프로젝트는 REST API 보다 <strong>WebSocket (<a href="http://Socket.IO">Socket.IO</a>) 이벤트</strong> 기반 설계가 중요합니다.</li>
+<li><code>(Server)</code> <code>io.to(room).emit('newQuiz', { quizData })</code></li>
+<li><code>(Client)</code> <code>socket.on('newQuiz', ...)</code></li>
+<li><code>(Client)</code> <code>socket.emit('submitAnswer', { answer: '...' })</code></li>
+<li><code>(Server)</code> <code>socket.on('submitAnswer', ...)</code></li>
+<li><code>(Server)</code> <code>io.to(room).emit('updateScore', { user, score })</code></li>
+</ul>
+</li>
+<li><strong>개발 일정 :</strong>
+<ul>
+<li><strong>Week 1-2 (MVP 설계):</strong> 기획서(PRD) 작성, Figma 와이어프레임, DB 스키마 설계</li>
+<li><strong>Week 3-5 (기능 구현):</strong> React UI, <a href="http://Socket.IO">Socket.IO</a> 연동, DB 연동 (P1 기능 중심)</li>
+<li><strong>Week 6 (테스트/배포):</strong> Vercel 배포, QA, 데모 준비</li>
+</ul>
+</li>
+</ul>
+
+            
+            
+        </body>
+        </html>
