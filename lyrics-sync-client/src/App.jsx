@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import io from 'socket.io-client';
-import axios from 'axios';
+import axios from 'axios'; // API 통신용
 import './App.css'; 
 
-// 1. 소켓 연결
-const socket = io('http://localhost:3001');
-
-// (allSongCollections 상수는 App 컴포넌트 내부로 이동)
+// 1. 소켓 연결 (환경 변수 사용)
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+const socket = io(SERVER_URL);
 
 // 글로벌 헤더
 const GlobalHeader = ({ onBack }) => (
@@ -68,7 +67,8 @@ function App() {
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/public/collections');
+        // 환경 변수 사용
+        const response = await axios.get(`${SERVER_URL}/api/public/collections`);
         if (response.data.success) {
           const formattedCollections = response.data.collections.map(name => ({ id: name, name: name }));
           setAllSongCollections(formattedCollections);
@@ -442,7 +442,6 @@ function App() {
             </div>
             
             <div className="settings-group checkbox-group">
-              {/* ⭐ [수정] 레이블 텍스트 변경 */}
               <label>곡 모음집 목록</label>
                 {allSongCollections.map(collection => (
                   <div className="collection-item" key={collection.id}>

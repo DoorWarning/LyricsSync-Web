@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import './admin.css';
 
-const API_URL = 'http://localhost:3001/api/admin';
+const API_URL = `${import.meta.env.VITE_SERVER_URL}/api/admin`;
 
 // ----------------------------------------------------------------
 // [수정] 폼 컴포넌트 (배열 <-> 문자열 변환)
