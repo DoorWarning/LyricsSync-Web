@@ -1,0 +1,154 @@
+/* src/global.css */
+
+/* ------------------------------ */
+/* 1. 글로벌 스타일 (폰트, 배경) */
+/* ------------------------------ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+:root {
+  --main-bg: #1A2036;
+  --panel-bg: #252D4A;
+  --primary-text: #FFFFFF;
+  --secondary-text: #B0B8D9;
+  
+  --accent-blue: #4DFFFF;
+  --accent-blue-dark: #3E5F8A;
+  --accent-pink: #FF4081;
+  
+  --team-a: #FF6B6B;
+  --team-b: #4D94FF;
+  
+  --font-main: 'Noto Sans KR', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-main);
+  background-color: var(--main-bg);
+  color: var(--primary-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.App {
+  text-align: center;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ------------------------------ */
+/* 2. 공통 컴포넌트 (버튼, 인풋 등) */
+/* ------------------------------ */
+button {
+  font-family: var(--font-main);
+  font-weight: 700;
+  font-size: 16px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--accent-pink);
+  color: var(--primary-text);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 10px rgba(255, 64, 129, 0.3);
+}
+.btn-blue {
+  background-color: var(--accent-blue-dark);
+  color: var(--primary-text);
+}
+.btn-blue:hover:not(:disabled) {
+  background-color: var(--accent-blue);
+  color: #000;
+}
+.btn-secondary {
+  background-color: #4A5575;
+  color: var(--secondary-text);
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+  font-family: var(--font-main);
+  font-size: 16px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 2px solid var(--panel-bg);
+  background-color: #2F3B5D;
+  color: var(--primary-text);
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+input[type="text"]::placeholder {
+  color: var(--secondary-text);
+}
+
+h1 { font-size: 36px; color: var(--accent-blue); }
+h2 { color: var(--primary-text); }
+h3 { color: var(--secondary-text); }
+
+.panel {
+  background-color: var(--panel-bg);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* ------------------------------ */
+/* 3. 팝업 모달 (공통) */
+/* ------------------------------ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--panel-bg);
+  padding: 20px 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  min-width: 300px;
+  border: 1px solid var(--accent-blue);
+}
+.modal-content h2 {
+  color: var(--accent-blue);
+  border-bottom-color: #2F3B5D;
+}
+.modal-content ul {
+  list-style: none;
+  padding-left: 0;
+}
+.modal-content li {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+.modal-content li[data-team="A"] { color: var(--team-a); }
+.modal-content li[data-team="B"] { color: var(--team-b); }
