@@ -2,7 +2,6 @@
 import React from 'react';
 import GlobalHeader from '../components/GlobalHeader';
 
-// [뷰 2] 대기실 (로비) 화면
 const LobbyView = ({ 
   roomState, 
   myPlayerId,
@@ -102,7 +101,7 @@ const LobbyView = ({
           </h3>
           
           <div className="text-left mb-4">
-            <label className="font-bold text-lg">
+            <label className="font-bold text-lg cursor-pointer">
               <input
                 type="checkbox"
                 name="isTeamMode"
@@ -125,7 +124,7 @@ const LobbyView = ({
                 <option value={10}>10명</option>
               </select>
             ) : (
-              <strong>{settings.maxPlayers}명</strong>
+              <strong className="text-lg">{settings.maxPlayers}명</strong>
             )}
           </div>
           
@@ -138,7 +137,7 @@ const LobbyView = ({
                 <option value={20}>20</option>
               </select>
             ) : (
-              <strong>{settings.maxRounds}</strong>
+              <strong className="text-lg">{settings.maxRounds}</strong>
             )}
           </div>
           
@@ -146,7 +145,7 @@ const LobbyView = ({
             <label className="block mb-2 font-bold">곡 모음집 목록</label>
               <div className="flex flex-col gap-2">
                 {allSongCollections.map(collection => (
-                  <div className="flex items-center justify-between bg-[var(--accent-blue-dark)] p-3 rounded-lg" key={collection.id}>
+                  <label key={collection.id} className="flex items-center justify-between bg-[var(--accent-blue-dark)] p-3 rounded-lg cursor-pointer">
                     <span className="font-bold">{collection.name}</span>
                     <input
                       type="checkbox"
@@ -157,7 +156,7 @@ const LobbyView = ({
                       disabled={!isHost}
                       className="form-checkbox h-5 w-5 text-[var(--accent-pink)] bg-gray-600 border-gray-500 rounded focus:ring-pink-500"
                     />
-                  </div>
+                  </label>
                 ))}
               </div>
           </div>

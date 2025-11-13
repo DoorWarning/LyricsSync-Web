@@ -1,7 +1,6 @@
 // src/views/JoinLinkView.jsx
 import React from 'react';
 
-// [뷰 1.5] 링크 참가 화면
 const JoinLinkView = ({ nickname, setNickname, roomCode, onJoinRoom, onGoBack }) => (
   <div className="flex justify-center items-center gap-12 mt-[10vh]">
     <div className="flex-shrink-0 text-left">

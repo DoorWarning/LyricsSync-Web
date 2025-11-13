@@ -1,7 +1,6 @@
 // src/views/LoginView.jsx
 import React from 'react';
 
-// [뷰 1] 로그인 화면
 const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom, onJoinRoom }) => (
   <div className="flex justify-center items-center gap-12 mt-[10vh]">
     
@@ -28,14 +27,14 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
       </div>
       <hr className="border-[var(--panel-bg)] my-5" />
       <div className="flex flex-col gap-4 mb-5">
-        <h3>방 만들기</h3>
+        <h3 className="text-left m-0">방 만들기</h3>
         <button onClick={onCreateRoom} disabled={!nickname.trim()} className="btn-primary w-full">
           새 방 만들기
         </button>
       </div>
       <hr className="border-[var(--panel-bg)] my-5" />
       <div className="flex flex-col gap-4">
-        <h3>방 참가하기</h3>
+        <h3 className="text-left m-0">방 참가하기</h3>
         <input
           type="text"
           value={roomCode}

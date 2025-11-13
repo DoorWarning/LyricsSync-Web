@@ -2,7 +2,6 @@
 import React from 'react';
 import GlobalHeader from '../components/GlobalHeader';
 
-// [뷰 3] 게임 화면
 const GameView = ({
   roomState,
   quizLyrics,
@@ -33,10 +32,10 @@ const GameView = ({
           </h3>
           {settings.isTeamMode ? (
             <ul className="list-none p-0">
-              <li className="text-lg font-bold p-4 rounded-lg bg-opacity-20 bg-[var(--team-a)] text-[var(--team-a)] mb-2">
+              <li data-team="A" className="text-lg font-bold p-4 rounded-lg bg-opacity-20 bg-[var(--team-a)] text-[var(--team-a)] mb-2">
                 A팀: {teamScores.A}점
               </li>
-              <li className="text-lg font-bold p-4 rounded-lg bg-opacity-20 bg-[var(--team-b)] text-[var(--team-b)]">
+              <li data-team="B" className="text-lg font-bold p-4 rounded-lg bg-opacity-20 bg-[var(--team-b)] text-[var(--team-b)]">
                 B팀: {teamScores.B}점
               </li>
             </ul>
@@ -63,7 +62,6 @@ const GameView = ({
             </div>
           </div>
           
-          {/* 채팅창 (시안에는 없지만 로그 표시용) */}
           <div className="panel h-64 overflow-y-scroll">
             <h3 className="text-lg font-bold border-b border-[var(--panel-bg)] pb-2 mb-4 text-left">
               채팅 로그

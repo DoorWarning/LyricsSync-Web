@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
-import './global.css';
+import './global.css'; 
 
 // 1. 뷰 컴포넌트 임포트
 import GlobalHeader from './components/GlobalHeader';
@@ -18,9 +18,7 @@ const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 const socket = io(SERVER_URL);
 
 function App() {
-  // ----------------------------------------------------------------
-  // 3. 모든 상태(State)와 훅(Hook)은 App.jsx에 유지합니다.
-  // ----------------------------------------------------------------
+  // 3. 모든 상태(State)와 훅(Hook)
   const [view, setView] = useState('login'); 
   const [nickname, setNickname] = useState('');
   const [roomCode, setRoomCode] = useState('');
@@ -35,9 +33,7 @@ function App() {
   const [showFinalScoreboard, setShowFinalScoreboard] = useState(false);
   const [finalScoreData, setFinalScoreData] = useState({ scores: {}, isTeamMode: false });
 
-  // ----------------------------------------------------------------
-  // 4. 모든 useEffect 훅 (이벤트 리스너)도 App.jsx에 유지합니다.
-  // ----------------------------------------------------------------
+  // 4. 모든 useEffect 훅 (이벤트 리스너)
   
   // URL에서 방 코드를 읽어오는 useEffect
   useEffect(() => {
@@ -147,16 +143,15 @@ function App() {
       socket.off('updateTeamScoreboard');
       socket.off('gameOver');
     };
-  }, []); // 의존성 배열 비우기 (한 번만 실행)
+  }, []);
 
-  // 점수판 정렬 (최상위 유지)
   const sortedScoreboard = useMemo(() => {
     const players = roomState?.players || {}; 
     return Object.entries(players).sort(([, playerA], [, playerB]) => playerB.score - playerA.score);
   }, [roomState?.players]);
 
   // ----------------------------------------------------------------
-  // 5. 모든 핸들러 함수도 App.jsx에 유지합니다.
+  // 5. 모든 핸들러 함수
   // ----------------------------------------------------------------
   
   const handleCreateRoom = () => {
@@ -220,16 +215,14 @@ function App() {
     window.history.pushState({}, '', '/');
   };
   const copyInviteLink = () => {
+    if (!roomState) return; // 방 정보가 없으면 복사 X
     const link = `${window.location.origin}/${roomState.roomCode}`;
     navigator.clipboard.writeText(link)
       .then(() => alert('초대 링크가 복사되었습니다!'))
       .catch(err => console.error('링크 복사 실패', err));
   };
-
-  // ----------------------------------------------------------------
-  // 6. 뷰 렌더링 (Switch문 사용)
-  // ----------------------------------------------------------------
   
+  // 6. 뷰 렌더링 (Switch문)
   const renderView = () => {
     switch(view) {
       case 'login':
@@ -254,11 +247,11 @@ function App() {
           />
         );
       case 'lobby':
-        if (!roomState) return <div>로딩 중...</div>; // 로비 데이터가 없을 때
+        if (!roomState) return <div>로딩 중...</div>;
         return (
           <LobbyView
             roomState={roomState}
-            myPlayerId={socket.id} // 내 ID 전달
+            myPlayerId={socket.id}
             onGoBack={handleGoToLogin}
             onCopyLink={copyInviteLink}
             onUpdateSettings={handleUpdateSettings}
@@ -269,7 +262,7 @@ function App() {
           />
         );
       case 'game':
-        if (!roomState) return <div>게임을 불러오는 중...</div>; // 게임 데이터가 없을 때
+        if (!roomState) return <div>게임을 불러오는 중...</div>;
         return (
           <GameView
             roomState={roomState}
@@ -289,6 +282,7 @@ function App() {
     }
   };
 
+  // 7. 메인 렌더링
   return (
     <div className="App max-w-7xl mx-auto p-5 text-center">
       {renderView()}
