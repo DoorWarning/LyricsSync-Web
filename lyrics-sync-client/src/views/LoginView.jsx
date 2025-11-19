@@ -68,6 +68,7 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: isMobile ? '10px 0px' : '0',
   };
 
   const formColumnStyle = {
@@ -81,7 +82,7 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
   const formStyle = {
     display: 'flex',
     flexDirection: 'column',
-    padding: '20px',
+    padding: '0px 20px 20px 20px',
     gap: '15px',
     textAlign: 'center',
   };
@@ -114,11 +115,11 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
         <div style={formColumnStyle}>
           <div style={formPanelStyle}>
             
-            <div className="flex mb-8">
+            <div className="flex mb-4">
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveTab('login')}
-                className={`flex-1 py-3 text-2xl font-bold rounded-lg transition-colors ${
+                className={`flex-1 py-3 !text-2xl font-bold rounded-lg transition-colors ${
                   activeTab === 'login' ? 'bg-[#38BDF8] text-slate-900' : 'bg-transparent text-[#E2E8F0]/70'
                 }`}
               >
@@ -127,11 +128,11 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveTab('code')}
-                className={`flex-1 py-3 text-2xl font-bold rounded-lg transition-colors ${
+                className={`flex-1 py-3 !text-2xl font-bold rounded-lg transition-colors ${
                   activeTab === 'code' ? 'bg-[#38BDF8] text-slate-900' : 'bg-transparent text-[#E2E8F0]/70'
                 }`}
               >
-                코드로 참여
+                방 입장
               </motion.button>
             </div>
 

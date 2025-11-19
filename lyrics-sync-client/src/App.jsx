@@ -284,7 +284,7 @@ function App() {
 
   // 7. 메인 렌더링
   return (
-    <div className="App max-w-7xl mx-auto p-5 text-center">
+    <div className="App w-full min-h-screen text-center">
       {renderView()}
       
       {showFinalScoreboard && (

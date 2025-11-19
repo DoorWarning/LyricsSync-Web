@@ -3,7 +3,7 @@ name: Keep Render Service Awake
 
 on:
   schedule:
-    # 10분마다 작업을 실행합니다.
+    # 5분마다 작업을 실행합니다.
     # cron 문법: '분 시 일 월 요일'
     - cron: '*/5 * * * *'
   

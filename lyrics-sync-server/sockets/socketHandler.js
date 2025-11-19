@@ -2,6 +2,25 @@
 const { rooms, generateRoomCode, clearRoomTimers, startNewRound } = require('../controllers/gameLogic');
 const Song = require('../models/Song');
 
+const TOTAL_AVATARS = 15;
+const allAvatarIds = Array.from({ length: TOTAL_AVATARS }, (_, i) => `av_${i + 1}`);
+
+function getAvailableAvatar(room) {
+    if (!room) {
+        return allAvatarIds[Math.floor(Math.random() * allAvatarIds.length)];
+    }
+
+    const usedAvatars = Object.values(room.players).map(p => p.avatar).filter(Boolean);
+
+    if (usedAvatars.length >= allAvatarIds.length) {
+        return allAvatarIds[Math.floor(Math.random() * allAvatarIds.length)];
+    }
+
+    const availableAvatars = allAvatarIds.filter(id => !usedAvatars.includes(id));
+    const randomIndex = Math.floor(Math.random() * availableAvatars.length);
+    return availableAvatars[randomIndex];
+}
+
 module.exports = function(io) {
 
   io.on('connection', (socket) => {
@@ -12,11 +31,13 @@ module.exports = function(io) {
       const roomCode = generateRoomCode();
       socket.join(roomCode);
       
+      const assignedAvatar = getAvailableAvatar(null); // 방 생성 시에는 랜덤 아바타
+
       rooms[roomCode] = {
         roomCode: roomCode,
         hostId: socket.id,
         players: {
-          [socket.id]: { nickname, score: 0, isReady: false, team: null }
+          [socket.id]: { nickname, score: 0, isReady: false, team: null, avatar: assignedAvatar }
         },
         settings: { 
           maxRounds: 10, 
@@ -63,7 +84,8 @@ module.exports = function(io) {
       socket.nickname = nickname;
       socket.roomCode = roomCode;
 
-      room.players[socket.id] = { nickname, score: 0, isReady: false, team: null }; 
+      const assignedAvatar = getAvailableAvatar(room);
+      room.players[socket.id] = { nickname, score: 0, isReady: false, team: null, avatar: assignedAvatar }; 
       io.to(roomCode).emit('updateLobby', room);
     });
 
