@@ -13,6 +13,15 @@ const getAvatar = (avatarId) => {
   }
 };
 
+// --- 안전한 리스트 변환 함수 (핵심 수정) ---
+// 서버나 상위 컴포넌트에서 데이터가 오염되어(문자열, null 등) 내려와도
+// 항상 배열 형태로 변환하여 에러를 방지합니다.
+const getSafeList = (data) => {
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'string' && data.length > 0) return [data]; // 문자열로 변질된 경우 배열로 취급
+  return [];
+};
+
 // --- Variants 설정 ---
 const desktopReadyVariants = {
   ready: { backgroundColor: '#4ade80', color: '#000000' },
@@ -46,16 +55,8 @@ const CustomCheckbox = ({ checked, onChange, value, name }) => {
           ? 'bg-rose-500 border-rose-500' 
           : 'bg-slate-800 border-slate-500 hover:border-slate-400'
       }`}
-      onClick={() => {
-        onChange({ 
-          target: { 
-            name, 
-            value, 
-            type: 'checkbox', 
-            checked: !checked 
-          } 
-        });
-      }}
+      // 클릭 이벤트는 부모 div에서 처리하므로 여기서는 빈 함수
+      onClick={() => {}} 
     >
       {checked && (
         <motion.svg 
@@ -206,7 +207,7 @@ const LobbyView = ({
   onSelectTeam, 
   onReady, 
   onStartGame,
-  allSongCollections 
+  allSongCollections
 }) => {
   
   const [alertInfo, setAlertInfo] = useState({ isOpen: false, message: '', type: 'error' });
@@ -230,12 +231,9 @@ const LobbyView = ({
 
   // --- 핸들러 ---
 
-  // ✨ 수정됨: 도메인/방코드 형식으로 링크 생성
   const handleCopyLink = async () => {
     try {
-        const origin = window.location.origin; // 예: http://localhost:5173
-        
-        // 요청하신 형식: 도메인/방코드
+        const origin = window.location.origin;
         const inviteUrl = `${origin}/${roomCode}`; 
 
         await navigator.clipboard.writeText(inviteUrl);
@@ -273,11 +271,13 @@ const LobbyView = ({
   const handleStartGame = () => {
     const playerList = Object.values(players); 
     
+    // 1. 플레이어 수 체크
     if (playerList.length < 2) { 
         setAlertInfo({ isOpen: true, message: '게임을 시작하려면 최소 2명의 플레이어가 필요합니다.', type: 'error' });
         return;
     }
 
+    // 2. 팀전 체크
     if (settings.isTeamMode) {
        const noTeamPlayers = playerList.filter(p => !p.team);
        if (noTeamPlayers.length > 0) {
@@ -293,6 +293,7 @@ const LobbyView = ({
        }
     }
 
+    // 3. 준비 상태 체크
     const notReadyPlayers = Object.entries(players).filter(([id, p]) => {
       if (id === hostId) return false;
       return !p.isReady;
@@ -301,6 +302,21 @@ const LobbyView = ({
     if (notReadyPlayers.length > 0) {
       setAlertInfo({ isOpen: true, message: `아직 준비하지 않은 플레이어가 있습니다!`, type: 'error' });
       return;
+    }
+
+    // 4. [곡 모음집 유효성 체크 - 강화됨]
+    // 데이터가 배열인지, 비어있는지, 화면에 있는 유효한 ID인지 철저하게 검사
+    const safeCollections = getSafeList(settings.songCollections);
+    
+    // 실제로 존재하는 곡 모음집인지 필터링
+    const validSelectedCollections = safeCollections.filter(id => 
+        allSongCollections.some(collection => collection.id === id)
+    );
+
+    // 유효한 선택이 하나도 없으면 경고
+    if (validSelectedCollections.length === 0) {
+        setAlertInfo({ isOpen: true, message: '최소 한 개의 곡 모음집을 선택해야 합니다!', type: 'error' });
+        return;
     }
 
     onStartGame();
@@ -440,17 +456,39 @@ const LobbyView = ({
                   <div>
                     <label className="block text-slate-200 text-left font-bold mb-2">곡 모음집</label>
                     <div className="space-y-2">
-                      {allSongCollections.map(collection => (
-                        <label key={collection.id} className="flex items-center justify-between bg-sky-400 p-3 rounded-lg cursor-pointer hover:bg-sky-500">
-                          <span className="font-bold text-slate-800">{collection.name}</span>
-                          <CustomCheckbox
-                            name="songCollections"
-                            value={collection.id}
-                            checked={settings.songCollections.includes(collection.id)}
-                            onChange={onUpdateSettings}
-                          />
-                        </label>
-                      ))}
+                      {allSongCollections.map(collection => {
+                        // getSafeList를 사용해 songCollections가 배열임을 보장
+                        const currentList = getSafeList(settings.songCollections);
+                        const isChecked = currentList.includes(collection.id);
+                        
+                        return (
+                            <div 
+                            key={collection.id} 
+                            onClick={() => {
+                                // [수정됨] 부모 컴포넌트가 이해할 수 있는 기존 방식(단일 토글)으로 전송
+                                onUpdateSettings({
+                                    target: {
+                                        name: 'songCollections',
+                                        value: collection.id,
+                                        type: 'checkbox',     // 중요: 부모가 체크박스 로직으로 처리하도록 명시
+                                        checked: !isChecked   // 중요: 현재 상태의 반대값을 전송
+                                    }
+                                });
+                            }}
+                            className="flex items-center justify-between bg-sky-400 p-3 rounded-lg cursor-pointer hover:bg-sky-500 transition-colors select-none"
+                            >
+                            <span className="font-bold text-slate-800">{collection.name}</span>
+                            <div className="pointer-events-none">
+                                <CustomCheckbox
+                                name="songCollections"
+                                value={collection.id}
+                                checked={isChecked}
+                                onChange={() => {}}
+                                />
+                            </div>
+                            </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </>
@@ -469,7 +507,7 @@ const LobbyView = ({
                   <div className="text-left">
                     <p className="font-bold text-slate-400 mb-2">선택된 곡 모음집</p>
                     <div className="space-y-2">
-                      {settings.songCollections
+                      {getSafeList(settings.songCollections)
                         .map(id => allSongCollections.find(c => c.id === id))
                         .filter(Boolean)
                         .map(collection => (
