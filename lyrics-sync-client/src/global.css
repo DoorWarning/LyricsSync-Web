@@ -159,3 +159,25 @@ h3 { color: var(--secondary-text); }
 }
 .modal-content li[data-team="A"] { color: var(--team-a); }
 .modal-content li[data-team="B"] { color: var(--team-b); }
+
+/* Custom Scrollbar Styles */
+/* For Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+  height: 8px; /* Height of horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--panel-bg); /* Color of the scrollbar track */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-blue-dark); /* Color of the scrollbar thumb */
+  border-radius: 10px;
+  border: 2px solid var(--panel-bg); /* Space around the thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue); /* Color of the scrollbar thumb on hover */
+}

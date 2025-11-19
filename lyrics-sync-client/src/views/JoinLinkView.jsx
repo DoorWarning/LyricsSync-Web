@@ -100,7 +100,7 @@ const JoinLinkView = ({ nickname, setNickname, roomCode, onJoinRoom, onGoBack })
               <h2 className="text-3xl font-bold text-sky-300 mb-2">
                 <span className="text-4xl" style={{ color: '#F43F5E' }}>{roomCode}</span> 방에 참여
               </h2>
-              <p className="text-slate-400 mb-8">사용할 닉네임을 입력하세요.</p>
+              <p className="text-slate-400">사용할 닉네임을 입력하세요.</p>
 
               <form onSubmit={handleJoin} style={formStyle}>
                 <label htmlFor="nickname-join" className="text-2xl font-semibold text-[#E2E8F0]">닉네임</label>
