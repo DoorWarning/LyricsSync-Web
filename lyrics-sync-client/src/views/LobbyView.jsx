@@ -37,7 +37,7 @@ const cardVariants = {
   exit: { opacity: 0, scale: 0.5, y: -20, transition: { duration: 0.2 } }
 };
 
-// --- ✨ 커스텀 체크박스 컴포넌트 (새로 추가됨) ---
+// --- 커스텀 체크박스 ---
 const CustomCheckbox = ({ checked, onChange, value, name }) => {
   return (
     <div 
@@ -47,7 +47,6 @@ const CustomCheckbox = ({ checked, onChange, value, name }) => {
           : 'bg-slate-800 border-slate-500 hover:border-slate-400'
       }`}
       onClick={() => {
-        // 부모의 핸들러(onUpdateSettings)가 event 객체를 기대하므로 가짜 이벤트 객체 생성
         onChange({ 
           target: { 
             name, 
@@ -78,8 +77,15 @@ const CustomCheckbox = ({ checked, onChange, value, name }) => {
   );
 };
 
-// --- 커스텀 알림 팝업 컴포넌트 ---
-const CustomAlert = ({ isOpen, message, onClose }) => {
+// --- 커스텀 알림 팝업 ---
+const CustomAlert = ({ isOpen, message, type = 'error', onClose }) => {
+  const isSuccess = type === 'success';
+  
+  const borderColor = isSuccess ? 'border-emerald-500' : 'border-rose-500';
+  const buttonColor = isSuccess ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-rose-500 hover:bg-rose-600';
+  const icon = isSuccess ? '✅' : '⚠️';
+  const title = isSuccess ? '성공' : '알림';
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -96,15 +102,15 @@ const CustomAlert = ({ isOpen, message, onClose }) => {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.5, opacity: 0, y: 50 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            className="relative w-full max-w-sm bg-slate-800 border-2 border-rose-500 rounded-2xl p-6 shadow-2xl text-center"
+            className={`relative w-full max-w-sm bg-slate-800 border-2 ${borderColor} rounded-2xl p-6 shadow-2xl text-center`}
           >
-            <div className="mb-4 text-5xl">⚠️</div>
-            <h3 className="text-xl font-bold text-white mb-2">알림</h3>
-            <p className="text-slate-300 mb-6 word-keep-all">{message}</p>
+            <div className="mb-4 text-5xl">{icon}</div>
+            <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+            <p className="text-slate-300 mb-6 word-keep-all whitespace-pre-wrap">{message}</p>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={onClose}
-              className="w-full py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl transition shadow-lg"
+              className={`w-full py-3 ${buttonColor} text-white font-bold rounded-xl transition shadow-lg`}
             >
               확인
             </motion.button>
@@ -116,7 +122,7 @@ const CustomAlert = ({ isOpen, message, onClose }) => {
 };
 
 
-// --- 플레이어 카드 컴포넌트들 ---
+// --- 플레이어 카드 ---
 
 const DesktopPlayerCard = React.memo(({ id, player, hostId, myPlayerId }) => {
   const isHost = id === hostId;
@@ -196,7 +202,6 @@ const LobbyView = ({
   roomState, 
   myPlayerId,
   onGoBack, 
-  onCopyLink, 
   onUpdateSettings, 
   onSelectTeam, 
   onReady, 
@@ -204,7 +209,7 @@ const LobbyView = ({
   allSongCollections 
 }) => {
   
-  const [alertInfo, setAlertInfo] = useState({ isOpen: false, message: '' });
+  const [alertInfo, setAlertInfo] = useState({ isOpen: false, message: '', type: 'error' });
   const closeAlert = () => setAlertInfo({ ...alertInfo, isOpen: false });
 
   if (!roomState) return <div className="text-white">로딩 중...</div>;
@@ -225,6 +230,31 @@ const LobbyView = ({
 
   // --- 핸들러 ---
 
+  // ✨ 수정됨: 도메인/방코드 형식으로 링크 생성
+  const handleCopyLink = async () => {
+    try {
+        const origin = window.location.origin; // 예: http://localhost:5173
+        
+        // 요청하신 형식: 도메인/방코드
+        const inviteUrl = `${origin}/${roomCode}`; 
+
+        await navigator.clipboard.writeText(inviteUrl);
+        
+        setAlertInfo({
+            isOpen: true,
+            message: `초대 링크가 복사되었습니다!`,
+            type: 'success'
+        });
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        setAlertInfo({
+            isOpen: true,
+            message: '링크 복사에 실패했습니다.',
+            type: 'error'
+        });
+    }
+  };
+
   const handleMaxPlayersChange = (e) => {
     const newMax = parseInt(e.target.value, 10);
     const currentCount = Object.keys(players).length;
@@ -232,7 +262,8 @@ const LobbyView = ({
     if (newMax < currentCount) {
         setAlertInfo({
             isOpen: true,
-            message: `현재 인원(${currentCount}명)보다 적게 설정할 수 없습니다.`
+            message: `현재 인원(${currentCount}명)보다 적게 설정할 수 없습니다.`,
+            type: 'error'
         });
         return;
     }
@@ -240,31 +271,35 @@ const LobbyView = ({
   };
 
   const handleStartGame = () => {
-    const playerList = Object.values(players);
+    const playerList = Object.values(players); 
     
     if (playerList.length < 2) { 
-        setAlertInfo({ isOpen: true, message: '게임을 시작하려면 최소 2명의 플레이어가 필요합니다.' });
+        setAlertInfo({ isOpen: true, message: '게임을 시작하려면 최소 2명의 플레이어가 필요합니다.', type: 'error' });
         return;
     }
 
     if (settings.isTeamMode) {
        const noTeamPlayers = playerList.filter(p => !p.team);
        if (noTeamPlayers.length > 0) {
-          setAlertInfo({ isOpen: true, message: '아직 팀을 선택하지 않은 플레이어가 있습니다!' });
+          setAlertInfo({ isOpen: true, message: '아직 팀을 선택하지 않은 플레이어가 있습니다!', type: 'error' });
           return;
        }
        
        const teamACount = playerList.filter(p => p.team === 'A').length;
        const teamBCount = playerList.filter(p => p.team === 'B').length;
        if (teamACount === 0 || teamBCount === 0) {
-          setAlertInfo({ isOpen: true, message: '양 팀에 최소 1명 이상의 플레이어가 필요합니다.' });
+          setAlertInfo({ isOpen: true, message: '양 팀에 최소 1명 이상의 플레이어가 필요합니다.', type: 'error' });
           return;
        }
     }
 
-    const notReadyPlayers = playerList.filter(p => !p.isReady && p.id !== hostId);
+    const notReadyPlayers = Object.entries(players).filter(([id, p]) => {
+      if (id === hostId) return false;
+      return !p.isReady;
+    });
+
     if (notReadyPlayers.length > 0) {
-      setAlertInfo({ isOpen: true, message: `아직 준비하지 않은 플레이어가 있습니다!` });
+      setAlertInfo({ isOpen: true, message: `아직 준비하지 않은 플레이어가 있습니다!`, type: 'error' });
       return;
     }
 
@@ -273,10 +308,11 @@ const LobbyView = ({
 
   return (
     <div className="bg-slate-900 min-h-screen text-white p-4 md:p-8 relative">
-      {/* 알림 팝업 */}
+      {/* 커스텀 알림 팝업 */}
       <CustomAlert 
         isOpen={alertInfo.isOpen} 
         message={alertInfo.message} 
+        type={alertInfo.type}
         onClose={closeAlert} 
       />
 
@@ -407,7 +443,6 @@ const LobbyView = ({
                       {allSongCollections.map(collection => (
                         <label key={collection.id} className="flex items-center justify-between bg-sky-400 p-3 rounded-lg cursor-pointer hover:bg-sky-500">
                           <span className="font-bold text-slate-800">{collection.name}</span>
-                          {/* ✨ 기존 input 체크박스를 CustomCheckbox로 교체 */}
                           <CustomCheckbox
                             name="songCollections"
                             value={collection.id}
@@ -423,8 +458,8 @@ const LobbyView = ({
                 <>
                   <div className="flex items-center gap-4 mb-4">
                     <div className="flex-1 text-left">
-                      <p className="font-bold text-slate-400">모드</p>
-                      <p className="text-xl font-bold">{settings.isTeamMode ? "팀전" : "개인전"}</p>
+                      <p className="font-bold text-slate-400">팀전</p>
+                      <p className="text-xl font-bold">{settings.isTeamMode ? "활성화" : "비활성화"}</p>
                     </div>
                     <div className="flex-1 text-left">
                       <p className="font-bold text-slate-400">라운드 수</p>
@@ -451,7 +486,7 @@ const LobbyView = ({
           </div>
           
           <div className="grid grid-cols-2 gap-10">
-            <motion.button whileTap={{ scale: 0.9 }} onClick={onCopyLink} className="bg-indigo-900 text-slate-200 font-bold py-3 rounded-2xl hover:bg-indigo-800 transition h-14 !text-2xl">
+            <motion.button whileTap={{ scale: 0.9 }} onClick={handleCopyLink} className="bg-indigo-900 text-slate-200 font-bold py-3 rounded-2xl hover:bg-indigo-800 transition h-14 !text-2xl">
               초대
             </motion.button>
             
