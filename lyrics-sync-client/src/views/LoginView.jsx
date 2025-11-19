@@ -1,5 +1,6 @@
 // src/views/LoginView.jsx
 import React, { useState, useEffect } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 
 // SVG 파일 임포트
 import robotSvg from '../LOGO/robot.svg';
@@ -10,6 +11,9 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
   const [activeTab, setActiveTab] = useState('login'); // 'login' 또는 'code'
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  const nicknameControls = useAnimation();
+  const roomCodeControls = useAnimation();
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -17,6 +21,26 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // 닉네임 변경 시 애니메이션 실행
+  useEffect(() => {
+    if (nickname) {
+      nicknameControls.start({
+        scale: [1, 1.02, 1],
+        transition: { duration: 0.2 }
+      });
+    }
+  }, [nickname, nicknameControls]);
+
+  // 방 코드 변경 시 애니메이션 실행
+  useEffect(() => {
+    if (roomCode) {
+      roomCodeControls.start({
+        scale: [1, 1.02, 1],
+        transition: { duration: 0.2 }
+      });
+    }
+  }, [roomCode, roomCodeControls]);
 
   const handleJoin = (e) => {
     e.preventDefault();
@@ -91,28 +115,31 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
           <div style={formPanelStyle}>
             
             <div className="flex mb-8">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveTab('login')}
                 className={`flex-1 py-3 text-2xl font-bold rounded-lg transition-colors ${
                   activeTab === 'login' ? 'bg-[#38BDF8] text-slate-900' : 'bg-transparent text-[#E2E8F0]/70'
                 }`}
               >
                 방 만들기
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveTab('code')}
                 className={`flex-1 py-3 text-2xl font-bold rounded-lg transition-colors ${
                   activeTab === 'code' ? 'bg-[#38BDF8] text-slate-900' : 'bg-transparent text-[#E2E8F0]/70'
                 }`}
               >
                 코드로 참여
-              </button>
+              </motion.button>
             </div>
 
             {activeTab === 'login' ? (
               <form onSubmit={handleCreate} style={formStyle}>
                 <label htmlFor="nickname-create" className="text-2xl font-semibold text-[#E2E8F0]">닉네임 입력</label>
-                <input
+                <motion.input
+                  animate={nicknameControls}
                   id="nickname-create"
                   type="text"
                   value={nickname}
@@ -120,18 +147,20 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
                   placeholder="닉네임"
                   className="bg-[#38BDF8] rounded-lg p-4 text-2xl text-slate-900 font-semibold placeholder-slate-800/50 text-center focus:outline-none focus:ring-4 focus:ring-[#38BDF8]/50 w-full"
                 />
-                <button 
+                <motion.button 
+                  whileTap={{ scale: 0.95 }}
                   type="submit"
                   disabled={!nickname.trim()}
                   className="bg-[#F43F5E] hover:bg-opacity-90 disabled:bg-opacity-50 disabled:cursor-not-allowed text-white text-3xl font-bold py-4 rounded-lg transition-colors w-full"
                 >
                   시작
-                </button>
+                </motion.button>
               </form>
             ) : (
               <form onSubmit={handleJoin} style={formStyle}>
                 <label htmlFor="nickname-join" className="text-2xl font-semibold text-[#E2E8F0]">닉네임 입력</label>
-                <input
+                <motion.input
+                  animate={nicknameControls}
                   id="nickname-join"
                   type="text"
                   value={nickname}
@@ -140,7 +169,8 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
                   className="bg-[#38BDF8] rounded-lg p-4 text-2xl text-slate-900 font-semibold placeholder-slate-800/50 text-center focus:outline-none focus:ring-4 focus:ring-[#38BDF8]/50 w-full"
                 />
                 <label htmlFor="room-code" className="text-2xl font-semibold text-[#E2E8F0]">방 코드 입력</label>
-                <input
+                <motion.input
+                  animate={roomCodeControls}
                   id="room-code"
                   type="text"
                   value={roomCode}
@@ -149,13 +179,14 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
                   maxLength={4}
                   className="bg-[#38BDF8] rounded-lg p-4 text-3xl text-center tracking-[0.5em] font-bold text-slate-900 placeholder-slate-800/50 focus:outline-none focus:ring-4 focus:ring-[#38BDF8]/50 w-full"
                 />
-                <button 
+                <motion.button 
+                  whileTap={{ scale: 0.95 }}
                   type="submit"
                   disabled={!nickname.trim() || roomCode.length < 4}
                   className="bg-[#F43F5E] hover:bg-opacity-90 disabled:bg-opacity-50 disabled:cursor-not-allowed text-white text-3xl font-bold py-4 rounded-lg transition-colors w-full"
                 >
                   참가
-                </button>
+                </motion.button>
               </form>
             )}
           </div>

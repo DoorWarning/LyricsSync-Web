@@ -1,5 +1,6 @@
 // src/views/JoinLinkView.jsx
 import React, { useState, useEffect } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 
 // SVG 파일 임포트
 import robotSvg from '../LOGO/robot.svg';
@@ -8,6 +9,7 @@ import lyricsSyncSvg from '../LOGO/LyricsSyncM.svg';
 
 const JoinLinkView = ({ nickname, setNickname, roomCode, onJoinRoom, onGoBack }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const nicknameControls = useAnimation();
 
   useEffect(() => {
     const handleResize = () => {
@@ -16,6 +18,16 @@ const JoinLinkView = ({ nickname, setNickname, roomCode, onJoinRoom, onGoBack })
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // 닉네임 변경 시 애니메이션 실행
+  useEffect(() => {
+    if (nickname) {
+      nicknameControls.start({
+        scale: [1, 1.02, 1],
+        transition: { duration: 0.2 }
+      });
+    }
+  }, [nickname, nicknameControls]);
 
   const handleJoin = (e) => {
     e.preventDefault();
@@ -92,7 +104,9 @@ const JoinLinkView = ({ nickname, setNickname, roomCode, onJoinRoom, onGoBack })
 
               <form onSubmit={handleJoin} style={formStyle}>
                 <label htmlFor="nickname-join" className="text-2xl font-semibold text-[#E2E8F0]">닉네임</label>
-                <input
+                <motion.input
+                  animate={nicknameControls}
+                  whileFocus={{ scale: 1.02 }}
                   id="nickname-join"
                   type="text"
                   value={nickname}
@@ -100,20 +114,22 @@ const JoinLinkView = ({ nickname, setNickname, roomCode, onJoinRoom, onGoBack })
                   placeholder="닉네임"
                   className="bg-[#38BDF8] rounded-lg p-4 text-2xl text-slate-900 font-semibold placeholder-slate-800/50 text-center focus:outline-none focus:ring-4 focus:ring-[#38BDF8]/50 w-full"
                 />
-                <button 
+                <motion.button 
+                  whileTap={{ scale: 0.95 }}
                   type="submit"
                   disabled={!nickname.trim()}
                   className="bg-[#F43F5E] hover:bg-opacity-90 disabled:bg-opacity-50 disabled:cursor-not-allowed text-white text-3xl font-bold py-4 rounded-lg transition-colors w-full"
                 >
                   참가하기
-                </button>
-                <button 
+                </motion.button>
+                <motion.button 
+                  whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={onGoBack}
                   className="bg-[#38BDF8] hover:bg-[#38BDF8]/80 text-slate-900 text-xl font-bold py-3 rounded-lg transition-colors w-full"
                 >
                   취소
-                </button>
+                </motion.button>
               </form>
             </div>
           </div>
