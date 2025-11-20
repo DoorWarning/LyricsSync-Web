@@ -12,7 +12,11 @@ const {
   updateSong, 
   deleteSong, 
   generateTranslation 
+  handleWebhook
 } = adminController;
+
+// ⭐ [새로 추가] GitHub Webhook 라우트 (인증 불필요)
+router.post('/webhook/github', handleWebhook);
 
 // 로그인
 router.post('/login', login);
