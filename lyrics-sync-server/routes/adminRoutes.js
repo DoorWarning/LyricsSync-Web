@@ -11,7 +11,7 @@ const {
   createSong, 
   updateSong, 
   deleteSong, 
-  generateTranslation 
+  generateTranslation,
   handleWebhook
 } = adminController;
 
