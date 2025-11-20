@@ -1,6 +1,6 @@
 // src/views/GameView.jsx
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion'; 
 import robotSvg from '../LOGO/robot.svg';
 
 // 아바타 이미지를 동적으로 가져오기 위한 함수
@@ -18,7 +18,7 @@ const itemVariants = {
   exit: { opacity: 0, scale: 0.9 }
 };
 
-// 타이머 컴포넌트
+// --- 타이머 컴포넌트 (GameTimer) ---
 const GameTimer = ({ endTime }) => {
   const [timeLeft, setTimeLeft] = useState(0);
 
@@ -75,6 +75,7 @@ const GameTimer = ({ endTime }) => {
   );
 };
 
+// --- 정답 알림 팝업 컴포넌트 (AnswerPopup) ---
 const AnswerPopup = ({ data }) => {
   if (!data) return null;
   const isSuccess = data.type === 'success';
@@ -121,6 +122,7 @@ const AnswerPopup = ({ data }) => {
   );
 };
 
+// --- 팀원 카드 컴포넌트 (TeamMemberCard) ---
 const TeamMemberCard = ({ player }) => (
     <div className="flex items-center gap-2 bg-black/20 rounded-lg p-2 min-w-0">
       <img src={getAvatar(player.avatar || 'av_1')} alt={player.nickname} className="w-6 h-6 md:w-8 md:h-8 rounded-full border border-white/30 bg-slate-800 flex-shrink-0"/>
@@ -128,16 +130,28 @@ const TeamMemberCard = ({ player }) => (
     </div>
 );
 
+// --- GameView 메인 컴포넌트 ---
 const GameView = ({
   roomState, quizLyrics = '', messages = [], teamScores = { A: 0, B: 0 }, sortedScoreboard = [], suggestions = [],
   currentMessage = '', onMessageChange, onSubmitAnswer, onGoBack, answerPopupData = null, currentHints = []
 }) => {
   const chatScrollRef = useRef(null);
   const [activeTab, setActiveTab] = useState('game');
+  
+  const inputControls = useAnimation();
 
   useEffect(() => {
     if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-  }, [messages]);
+  }, [messages]); 
+
+  useEffect(() => {
+    if (currentMessage) {
+      inputControls.start({
+        scale: [1, 1.02, 1],
+        transition: { duration: 0.2 }
+      });
+    }
+  }, [currentMessage, inputControls]);
 
   if (!roomState) return <div className="text-white">게임을 불러오는 중...</div>;
   const { settings, roomCode, gameState } = roomState;
@@ -215,7 +229,6 @@ const GameView = ({
             <h2 className="text-xs md:text-lg text-slate-400">게임 진행 중</h2>
             <p className="text-xl md:text-2xl font-bold text-rose-500 tracking-widest">{roomCode}</p>
         </div>
-        {/* 헤더 우측 빈 공간 */}
         <div className="w-16 md:w-24"></div>
       </div>
 
@@ -237,9 +250,7 @@ const GameView = ({
             <div className="flex-1 min-w-0 text-left">
                {collectionName ? (
                  <div className="text-base md:text-xl font-bold text-white truncate pr-2">
-                     {/* 모바일: 아이콘 (text-xl로 키움) */}
                      <span className="md:hidden text-rose-400 mr-2 text-xl">♪</span>
-                     {/* 데스크톱: 텍스트 */}
                      <span className="hidden md:inline text-rose-400 mr-2">Now Playing :</span>
                      {collectionName}
                  </div>
@@ -264,6 +275,7 @@ const GameView = ({
             </div>
           </div>
 
+          {/* 힌트 영역 */}
           <AnimatePresence>
             {currentHints && currentHints.length > 0 && (
               <motion.div
@@ -285,14 +297,21 @@ const GameView = ({
             )}
           </AnimatePresence>
 
+          {/* [수정된 부분] 채팅 메시지 리스트에 애니메이션 적용 */}
           <div ref={chatScrollRef} className="bg-black bg-opacity-20 p-3 md:p-4 rounded-xl flex-grow overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-indigo-600 scrollbar-track-transparent min-h-0">
             {messages.map((msg, index) => (
-              <div key={index} className={`p-2 rounded-lg text-left text-xs md:text-base break-words ${getMessageContainerStyle(msg.type)}`}>
+              <motion.div 
+                key={index} 
+                initial={{ opacity: 0, y: 10 }} // height: 0 제거
+                animate={{ opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } }} // height: 'auto' 제거
+                className={`p-2 rounded-lg text-left text-xs md:text-base break-words ${getMessageContainerStyle(msg.type)}`}
+              >
                 {renderMessageContent(msg)}
-              </div>
+              </motion.div>
             ))}
           </div>
 
+          {/* [수정된 부분] 애니메이션이 적용된 입력창과 버튼 */}
           <div className="relative flex gap-2 flex-shrink-0">
             <AnimatePresence>
               {suggestions && suggestions.length > 0 && (
@@ -304,8 +323,24 @@ const GameView = ({
               )}
             </AnimatePresence>
 
-            <input type="text" placeholder={quizLyrics ? "정답 입력" : "대기 중"} value={currentMessage} onChange={onMessageChange} onKeyDown={(e) => e.key === 'Enter' && onSubmitAnswer(null)} disabled={!quizLyrics} className="flex-grow bg-indigo-950 border-2 border-indigo-700 text-white rounded-xl p-3 md:p-4 text-base md:text-lg focus:outline-none focus:border-sky-500 transition-colors placeholder-slate-500 disabled:opacity-50"/>
-            <button onClick={() => onSubmitAnswer(null)} disabled={!quizLyrics} className="bg-rose-500 hover:bg-rose-600 disabled:bg-slate-600 text-white font-bold px-4 md:px-6 rounded-xl transition-colors shadow-lg whitespace-nowrap">입력</button>
+            <motion.input 
+                animate={inputControls} // 입력 시 튀어오르는 애니메이션 연결
+                type="text" 
+                placeholder={quizLyrics ? "정답 입력" : "대기 중"} 
+                value={currentMessage} 
+                onChange={onMessageChange} 
+                onKeyDown={(e) => e.key === 'Enter' && onSubmitAnswer(null)} 
+                disabled={!quizLyrics} 
+                className="flex-grow bg-indigo-950 border-2 border-indigo-700 text-white rounded-xl p-3 md:p-4 text-base md:text-lg focus:outline-none focus:border-sky-500 transition-colors placeholder-slate-500 disabled:opacity-50"
+            />
+            <motion.button 
+                whileTap={{ scale: 0.95 }} // 클릭 시 눌리는 효과
+                onClick={() => onSubmitAnswer(null)} 
+                disabled={!quizLyrics} 
+                className="bg-rose-500 hover:bg-rose-600 disabled:bg-slate-600 text-white font-bold px-4 md:px-6 rounded-xl transition-colors shadow-lg whitespace-nowrap"
+            >
+                입력
+            </motion.button>
           </div>
         </div>
 
