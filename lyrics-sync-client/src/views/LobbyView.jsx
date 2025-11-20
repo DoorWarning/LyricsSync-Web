@@ -13,12 +13,10 @@ const getAvatar = (avatarId) => {
   }
 };
 
-// --- 안전한 리스트 변환 함수 (핵심 수정) ---
-// 서버나 상위 컴포넌트에서 데이터가 오염되어(문자열, null 등) 내려와도
-// 항상 배열 형태로 변환하여 에러를 방지합니다.
+// --- 안전한 리스트 변환 함수 ---
 const getSafeList = (data) => {
   if (Array.isArray(data)) return data;
-  if (typeof data === 'string' && data.length > 0) return [data]; // 문자열로 변질된 경우 배열로 취급
+  if (typeof data === 'string' && data.length > 0) return [data];
   return [];
 };
 
@@ -55,7 +53,6 @@ const CustomCheckbox = ({ checked, onChange, value, name }) => {
           ? 'bg-rose-500 border-rose-500' 
           : 'bg-slate-800 border-slate-500 hover:border-slate-400'
       }`}
-      // 클릭 이벤트는 부모 div에서 처리하므로 여기서는 빈 함수
       onClick={() => {}} 
     >
       {checked && (
@@ -179,7 +176,7 @@ const MobilePlayerCard = React.memo(({ id, player, hostId, myPlayerId }) => {
       animate="visible" 
       exit="exit" 
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className={`w-24 flex-shrink-0 flex sm:hidden flex-col items-center gap-1 p-2 rounded-2xl ${myPlayerId === id ? 'bg-sky-500/50' : 'bg-sky-400'}`}
+      className={`w-full flex-shrink-0 flex sm:hidden flex-col items-center gap-1 p-2 rounded-2xl ${myPlayerId === id ? 'bg-sky-500/50' : 'bg-sky-400'}`}
     >
       <motion.div 
         className="relative p-1 rounded-full"
@@ -188,10 +185,10 @@ const MobilePlayerCard = React.memo(({ id, player, hostId, myPlayerId }) => {
         animate={statusKey}
         transition={{ duration: 0.3 }}
       >
-        <img src={getAvatar(player.avatar || 'av_1')} alt={player.nickname} className="w-16 h-16 rounded-full border-2 border-slate-800" />
-        {isHost && <div className="absolute -top-1 -right-1 text-xl drop-shadow-md">👑</div>}
+        <img src={getAvatar(player.avatar || 'av_1')} alt={player.nickname} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-slate-800" />
+        {isHost && <div className="absolute -top-1 -right-1 text-lg sm:text-xl drop-shadow-md">👑</div>}
       </motion.div>
-      <p className="text-sm font-bold text-slate-200 truncate w-full text-center">
+      <p className="text-xs sm:text-sm font-bold text-slate-200 truncate w-full text-center">
         {player.nickname}
       </p>
     </motion.div>
@@ -206,7 +203,7 @@ const LobbyView = ({
   onUpdateSettings, 
   onSelectTeam, 
   onReady, 
-  onStartGame,
+  onStartGame, 
   allSongCollections
 }) => {
   
@@ -304,16 +301,12 @@ const LobbyView = ({
       return;
     }
 
-    // 4. [곡 모음집 유효성 체크 - 강화됨]
-    // 데이터가 배열인지, 비어있는지, 화면에 있는 유효한 ID인지 철저하게 검사
+    // 4. 곡 모음집 유효성 체크
     const safeCollections = getSafeList(settings.songCollections);
-    
-    // 실제로 존재하는 곡 모음집인지 필터링
     const validSelectedCollections = safeCollections.filter(id => 
         allSongCollections.some(collection => collection.id === id)
     );
 
-    // 유효한 선택이 하나도 없으면 경고
     if (validSelectedCollections.length === 0) {
         setAlertInfo({ isOpen: true, message: '최소 한 개의 곡 모음집을 선택해야 합니다!', type: 'error' });
         return;
@@ -355,7 +348,8 @@ const LobbyView = ({
         {/* --- 왼쪽 패널: 플레이어 목록 --- */}
         <div className="w-full md:w-2/3 bg-indigo-900 p-6 rounded-2xl flex flex-col">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 items-center">
-            <h3 className="text-2xl font-bold text-rose-500 text-center sm:text-left">
+            {/* 텍스트 크기 모바일 최적화 (text-lg) */}
+            <h3 className="text-lg sm:text-2xl font-bold text-rose-500 text-center sm:text-left">
               플레이어 {Object.keys(players).length} / {settings.maxPlayers}
             </h3>
             {isHost && (
@@ -373,53 +367,74 @@ const LobbyView = ({
             )}
           </div>
 
-          <div className="bg-black bg-opacity-20 p-4 rounded-xl flex flex-row md:flex-col gap-4 flex-grow overflow-x-auto md:overflow-y-auto">
+          <div className="bg-black bg-opacity-20 p-2 sm:p-4 rounded-xl flex-grow overflow-y-auto">
             {settings.isTeamMode ? (
-              <div className="flex md:grid md:grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* A팀 */}
-                <div className="flex flex-col items-center md:block min-w-[200px] md:min-w-0">
-                  <h4 className="text-xl font-bold text-red-400 mb-2 text-center">TEAM A ({teamA.length})</h4>
+              // 모바일: grid-cols-2로 좌우 분할
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 h-full content-start">
+                
+                {/* A팀 영역 */}
+                <div className="flex flex-col items-center bg-red-900/20 rounded-xl p-2 h-full">
+                  <h4 className="text-sm sm:text-xl font-bold text-red-400 mb-2 text-center">TEAM A ({teamA.length})</h4>
                   {myPlayer && myPlayer.team !== 'A' && (
-                      <motion.button whileTap={{ scale: 0.9 }} onClick={() => onSelectTeam('A')} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg mb-2 transition">A팀 참가</motion.button>
+                      <motion.button 
+                        whileTap={{ scale: 0.9 }} 
+                        onClick={() => onSelectTeam('A')} 
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg mb-2 transition"
+                      >
+                        참가
+                      </motion.button>
                   )}
-                  <div className="flex flex-row md:flex-col gap-4 md:space-y-3">
+                  <div className="w-full flex flex-col gap-2">
                     <AnimatePresence>
                       {teamA.map(([id, player]) => (
-                        <DesktopPlayerCard key={id} id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
+                        // ✨ 수정된 부분: Key 중복 방지를 위해 접두어 추가
+                        <DesktopPlayerCard key={`desktop-${id}`} id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
                       ))}
                       {teamA.map(([id, player]) => (
-                        <MobilePlayerCard key={id} id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
+                        // ✨ 수정된 부분: Key 중복 방지를 위해 접두어 추가
+                        <MobilePlayerCard key={`mobile-${id}`} id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
                       ))}
                     </AnimatePresence>
                   </div>
                 </div>
-                {/* B팀 */}
-                <div className="flex flex-col items-center md:block min-w-[200px] md:min-w-0">
-                  <h4 className="text-xl font-bold text-blue-400 mb-2 text-center">TEAM B ({teamB.length})</h4>
+
+                {/* B팀 영역 */}
+                <div className="flex flex-col items-center bg-blue-900/20 rounded-xl p-2 h-full">
+                  <h4 className="text-sm sm:text-xl font-bold text-blue-400 mb-2 text-center">TEAM B ({teamB.length})</h4>
                     {myPlayer && myPlayer.team !== 'B' && (
-                      <motion.button whileTap={{ scale: 0.9 }} onClick={() => onSelectTeam('B')} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mb-2 transition">B팀 참가</motion.button>
+                      <motion.button 
+                        whileTap={{ scale: 0.9 }} 
+                        onClick={() => onSelectTeam('B')} 
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg mb-2 transition"
+                      >
+                        참가
+                      </motion.button>
                   )}
-                  <div className="flex flex-row md:flex-col gap-4 md:space-y-3">
+                  <div className="w-full flex flex-col gap-2">
                     <AnimatePresence>
                       {teamB.map(([id, player]) => (
-                        <DesktopPlayerCard key={id} id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
+                        // ✨ 수정된 부분: Key 중복 방지를 위해 접두어 추가
+                        <DesktopPlayerCard key={`desktop-${id}`} id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
                       ))}
                       {teamB.map(([id, player]) => (
-                        <MobilePlayerCard key={id} id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
+                        // ✨ 수정된 부분: Key 중복 방지를 위해 접두어 추가
+                        <MobilePlayerCard key={`mobile-${id}`} id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
                       ))}
                     </AnimatePresence>
                   </div>
                 </div>
               </div>
             ) : (
-              <AnimatePresence>
-                {noTeam.map(([id, player]) => (
-                  <React.Fragment key={id}>
-                    <DesktopPlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
-                    <MobilePlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
-                  </React.Fragment>
-                ))}
-              </AnimatePresence>
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                <AnimatePresence>
+                  {noTeam.map(([id, player]) => (
+                    <React.Fragment key={id}>
+                      <DesktopPlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
+                      <MobilePlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} />
+                    </React.Fragment>
+                  ))}
+                </AnimatePresence>
+              </div>
             )}
           </div>
         </div>
@@ -457,7 +472,6 @@ const LobbyView = ({
                     <label className="block text-slate-200 text-left font-bold mb-2">곡 모음집</label>
                     <div className="space-y-2">
                       {allSongCollections.map(collection => {
-                        // getSafeList를 사용해 songCollections가 배열임을 보장
                         const currentList = getSafeList(settings.songCollections);
                         const isChecked = currentList.includes(collection.id);
                         
@@ -465,13 +479,12 @@ const LobbyView = ({
                             <div 
                             key={collection.id} 
                             onClick={() => {
-                                // [수정됨] 부모 컴포넌트가 이해할 수 있는 기존 방식(단일 토글)으로 전송
                                 onUpdateSettings({
                                     target: {
                                         name: 'songCollections',
                                         value: collection.id,
-                                        type: 'checkbox',     // 중요: 부모가 체크박스 로직으로 처리하도록 명시
-                                        checked: !isChecked   // 중요: 현재 상태의 반대값을 전송
+                                        type: 'checkbox',
+                                        checked: !isChecked
                                     }
                                 });
                             }}

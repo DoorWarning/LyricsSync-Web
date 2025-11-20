@@ -1,15 +1,63 @@
 // src/views/LoginView.jsx
 import React, { useState, useEffect } from 'react';
-import { motion, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 
 // SVG 파일 임포트
 import robotSvg from '../LOGO/robot.svg';
 import animatedResultSvg from '../LOGO/animated_result.svg';
 import lyricsSyncSvg from '../LOGO/LyricsSyncM.svg';
 
+// --- 커스텀 알림 팝업 (LobbyView와 통일) ---
+const CustomAlert = ({ isOpen, message, type = 'error', onClose }) => {
+  const isSuccess = type === 'success';
+  
+  const borderColor = isSuccess ? 'border-emerald-500' : 'border-rose-500';
+  const buttonColor = isSuccess ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-rose-500 hover:bg-rose-600';
+  const icon = isSuccess ? '✅' : '⚠️';
+  const title = isSuccess ? '성공' : '알림';
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          />
+          <motion.div 
+            initial={{ scale: 0.5, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.5, opacity: 0, y: 50 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className={`relative w-full max-w-sm bg-slate-800 border-2 ${borderColor} rounded-2xl p-6 shadow-2xl text-center`}
+          >
+            <div className="mb-4 text-5xl">{icon}</div>
+            <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+            <p className="text-slate-300 mb-6 word-keep-all whitespace-pre-wrap">{message}</p>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={onClose}
+              className={`w-full py-3 ${buttonColor} text-white font-bold rounded-xl transition shadow-lg`}
+            >
+              확인
+            </motion.button>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom, onJoinRoom }) => {
   const [activeTab, setActiveTab] = useState('login'); // 'login' 또는 'code'
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // 알림 팝업 상태 추가
+  const [alertInfo, setAlertInfo] = useState({ isOpen: false, message: '', type: 'error' });
+  const closeAlert = () => setAlertInfo({ ...alertInfo, isOpen: false });
 
   const nicknameControls = useAnimation();
   const roomCodeControls = useAnimation();
@@ -42,14 +90,33 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
     }
   }, [roomCode, roomCodeControls]);
 
-  const handleJoin = (e) => {
+  // --- 핸들러 수정: 에러 발생 시 커스텀 팝업 띄우기 ---
+  const handleJoin = async (e) => {
     e.preventDefault();
-    onJoinRoom();
+    try {
+      // onJoinRoom이 Promise를 반환하고 실패 시 에러를 throw한다고 가정
+      await onJoinRoom();
+    } catch (error) {
+      // 에러 메시지를 팝업으로 표시
+      setAlertInfo({ 
+        isOpen: true, 
+        message: error.message || error || "참가 중 오류가 발생했습니다.", 
+        type: 'error' 
+      });
+    }
   };
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
-    onCreateRoom();
+    try {
+      await onCreateRoom();
+    } catch (error) {
+      setAlertInfo({ 
+        isOpen: true, 
+        message: error.message || error || "방 생성 중 오류가 발생했습니다.", 
+        type: 'error' 
+      });
+    }
   };
 
   // --- 인라인 스타일 정의 ---
@@ -96,7 +163,16 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
   };
 
   return (
-    <div className="bg-[#0F172A] min-h-screen flex items-center justify-center p-4 text-[#E2E8F0]">
+    <div className="bg-[#0F172A] min-h-screen flex items-center justify-center p-4 text-[#E2E8F0] relative">
+      
+      {/* 커스텀 알림 팝업 추가 */}
+      <CustomAlert 
+        isOpen={alertInfo.isOpen} 
+        message={alertInfo.message} 
+        type={alertInfo.type}
+        onClose={closeAlert} 
+      />
+
       <div style={containerStyle}>
         
         <div style={imageColumnStyle}>

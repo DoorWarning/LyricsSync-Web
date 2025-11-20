@@ -66,7 +66,12 @@ function App() {
 
   // 메인 소켓 리스너
   useEffect(() => {
-    socket.on('error', (message) => alert(message));
+    // ⚠️ 중요: 기존의 global alert('error') 리스너를 제거했습니다.
+    // 이제 에러는 각 함수(handleJoinRoom 등)의 Promise catch에서 처리하거나,
+    // 게임 중 발생하는 에러는 별도의 알림창(Toast 등)으로 처리하는 것이 좋습니다.
+    
+    // socket.on('error', (message) => alert(message));  <-- 삭제됨
+
     socket.on('updateLobby', (room) => {
       setRoomState(room);
       setRoomCode(room.roomCode);
@@ -151,17 +156,78 @@ function App() {
   }, [roomState?.players]);
 
   // ----------------------------------------------------------------
-  // 5. 모든 핸들러 함수
+  // 5. 모든 핸들러 함수 (Promise 적용)
   // ----------------------------------------------------------------
   
+  // [수정됨] 방 생성 핸들러: Promise 반환
   const handleCreateRoom = () => {
-    if (nickname.trim()) socket.emit('createRoom', { nickname });
+    return new Promise((resolve, reject) => {
+        if (!nickname.trim()) {
+            return reject("닉네임을 입력해주세요.");
+        }
+
+        // 성공/실패 리스너 정의
+        const onSuccess = (room) => {
+            cleanup();
+            resolve(room);
+        };
+        const onError = (err) => {
+            cleanup();
+            reject(err);
+        };
+        const cleanup = () => {
+            socket.off('updateLobby', onSuccess);
+            socket.off('error', onError);
+            clearTimeout(timer);
+        };
+
+        // 리스너 등록 (한 번만 실행되도록 once 사용 권장하지만, 로직상 off 처리함)
+        socket.once('updateLobby', onSuccess);
+        socket.once('error', onError);
+
+        // 타임아웃 설정 (5초)
+        const timer = setTimeout(() => {
+            cleanup();
+            reject("서버 응답 시간이 초과되었습니다.");
+        }, 5000);
+
+        socket.emit('createRoom', { nickname });
+    });
   };
+
+  // [수정됨] 방 참가 핸들러: Promise 반환
   const handleJoinRoom = () => {
-    if (nickname.trim() && roomCode.trim()) {
-      socket.emit('joinRoom', { nickname, roomCode: roomCode.toUpperCase() });
-    }
+    return new Promise((resolve, reject) => {
+        if (!nickname.trim() || !roomCode.trim()) {
+            return reject("닉네임과 방 코드를 입력해주세요.");
+        }
+
+        const onSuccess = (room) => {
+            cleanup();
+            resolve(room);
+        };
+        const onError = (err) => {
+            cleanup();
+            reject(err);
+        };
+        const cleanup = () => {
+            socket.off('updateLobby', onSuccess);
+            socket.off('error', onError);
+            clearTimeout(timer);
+        };
+
+        socket.once('updateLobby', onSuccess);
+        socket.once('error', onError);
+
+        const timer = setTimeout(() => {
+            cleanup();
+            reject("서버 응답 시간이 초과되었습니다.");
+        }, 5000);
+
+        socket.emit('joinRoom', { nickname, roomCode: roomCode.toUpperCase() });
+    });
   };
+
   const handleUpdateSettings = (e) => {
     const { name, value, type, checked } = e.target;
     if (name === "songCollections") {
