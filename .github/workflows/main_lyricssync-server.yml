@@ -18,10 +18,9 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x' # 안정적인 20버전 추천
+          node-version: '22.x' # 안정적인 20버전 추천
 
       - name: npm install, build, and test
-        # ⭐ [핵심 수정] 서버 폴더 안에서 실행하도록 지정
         working-directory: lyrics-sync-server
         run: |
           npm install
@@ -33,7 +32,6 @@ jobs:
         with:
           name: node-app
           path: . 
-          # 전체 폴더를 업로드해야 Azure에서 경로가 꼬이지 않습니다.
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,4 +59,5 @@ jobs:
         with:
           app-name: 'LyricsSync-server'
           slot-name: 'Production'
+
           package: .
