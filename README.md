@@ -92,6 +92,7 @@
 * Vite
 * `socket.io-client`
 * `axios`
+* tailwindcss
 
 ### 2. Admin Client
 
