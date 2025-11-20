@@ -252,32 +252,41 @@ module.exports = function(io) {
       const player = room.players[socket.id];
       if (!player) return;
 
-      // 1. 플레이어 삭제 (메모리 상에서만)
       delete room.players[socket.id];
       
-      // 2. 퇴장 메시지 전송
-      io.to(roomCode).emit('receiveMessage', `[알림] ${player.nickname}님이 퇴장했습니다.`);
+      const remainingPlayerIds = Object.keys(room.players);
+      const isGameInProgress = room.gameState.currentRound > 0;
 
-      // 3. 방장 승계 로직 (방장인 경우에만)
-      if (socket.id === room.hostId) {
-        const remainingPlayers = Object.keys(room.players);
+      // 게임 도중 1명 이하만 남으면 게임 종료
+      if (isGameInProgress && remainingPlayerIds.length <= 1) {
+        console.log(`[${roomCode}] 방 최후의 1인 또는 0인으로 게임 종료!`);
+        clearRoomTimers(roomCode);
+
+        const finalScores = room.settings.isTeamMode ? room.teamScores : room.players;
+        io.to(roomCode).emit('gameOver', { scores: finalScores, isTeamMode: room.settings.isTeamMode }); 
+        room.gameState.currentRound = 0; 
         
-        if (remainingPlayers.length > 0) {
-          // 다음 사람에게 방장 위임
-          room.hostId = remainingPlayers[0];
-          const newHost = room.players[room.hostId];
-          io.to(roomCode).emit('receiveMessage', `[알림] 방장이 ${newHost.nickname}님으로 변경되었습니다.`);
-        } else {
-          // 남은 사람이 없으면 방 삭제
-          clearRoomTimers(roomCode);
-          delete rooms[roomCode];
-          console.log(`[${roomCode}] 방이 비어서 삭제되었습니다.`);
-          return; // 방이 사라졌으니 업데이트 전송 중단
-        }
+        io.to(roomCode).emit('updateLobby', room);
+
+      } else {
+        io.to(roomCode).emit('receiveMessage', `[알림] ${player.nickname}님이 퇴장했습니다.`);
+        io.to(roomCode).emit('updateLobby', room);
       }
 
-      // 4. [중요] 모든 처리가 끝난 최종 방 정보를 "한 번만" 전송
-      io.to(roomCode).emit('updateLobby', room);
+      // 호스트 이전 또는 방 삭제 로직
+      if (socket.id === room.hostId) {
+        if (remainingPlayerIds.length > 0) {
+          room.hostId = remainingPlayerIds[0]; // 다음 플레이어에게 방장 위임
+          io.to(roomCode).emit('updateLobby', room);
+          io.to(room.hostId).emit('receiveMessage', '[알림] 방장이 되었습니다.');
+        } else {
+          // 모든 플레이어가 나갔을 때 방과 타이머 삭제
+          clearRoomTimers(roomCode);
+          delete rooms[roomCode];
+          delete roomTimers[roomCode];
+          console.log(`[${roomCode}] 방이 비어서 삭제되었습니다.`);
+        }
+      }
     });
   });
 };

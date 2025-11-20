@@ -33,9 +33,11 @@ function App() {
   const [showFinalScoreboard, setShowFinalScoreboard] = useState(false);
   const [finalScoreData, setFinalScoreData] = useState({ scores: {}, isTeamMode: false });
 
+  const [answerPopupData, setAnswerPopupData] = useState(null);
+  // [수정됨] 힌트를 배열로 관리 (여러 개 누적)
+  const [currentHints, setCurrentHints] = useState([]); 
+
   // 4. 모든 useEffect 훅 (이벤트 리스너)
-  
-  // URL에서 방 코드를 읽어오는 useEffect
   useEffect(() => {
     const path = window.location.pathname;
     if (path.length > 1) {
@@ -45,7 +47,6 @@ function App() {
     }
   }, []);
   
-  // 앱 로드 시 곡 모음집 목록 불러오기
   useEffect(() => {
     const fetchCollections = async () => {
       try {
@@ -66,50 +67,73 @@ function App() {
 
   // 메인 소켓 리스너
   useEffect(() => {
-    // ⚠️ 중요: 기존의 global alert('error') 리스너를 제거했습니다.
-    // 이제 에러는 각 함수(handleJoinRoom 등)의 Promise catch에서 처리하거나,
-    // 게임 중 발생하는 에러는 별도의 알림창(Toast 등)으로 처리하는 것이 좋습니다.
-    
-    // socket.on('error', (message) => alert(message));  <-- 삭제됨
-
     socket.on('updateLobby', (room) => {
       setRoomState(room);
       setRoomCode(room.roomCode);
       setTeamScores(room.teamScores || { 'A': 0, 'B': 0 });
       setView('lobby');
       setMessages([]);
+      setAnswerPopupData(null);
     });
+
     socket.on('gameStarted', ({ room, autocompleteList }) => {
       setRoomState(room);
       setAutocompleteList(autocompleteList);
       setTeamScores(room.teamScores);
       setView('game');
       setMessages([]);
+      setAnswerPopupData(null);
+      setCurrentHints([]); // 힌트 초기화
     });
+
     socket.on('newQuiz', (quiz) => {
       setQuizLyrics(`[${quiz.collectionName}] (라운드 ${quiz.currentRound}/${quiz.maxRounds})\n${quiz.lyrics}`);
       setMessages([]);
+      setAnswerPopupData(null);
+      setCurrentHints([]); // [수정됨] 새 문제 시작 시 힌트 배열 초기화
       setRoomState(prev => {
         if (!prev) return null;
         return { ...prev, gameState: { ...prev.gameState, currentRound: quiz.currentRound }};
       });
     });
+
     socket.on('receiveMessage', (text) => setMessages(prev => [...prev, { type: 'chat', text }]));
-    socket.on('showHint', (data) => setMessages(prev => [...prev, { type: 'hint', text: `[${data.type} 힌트] ${data.hint}` }]));
+    
+    // [수정됨] 힌트가 오면 배열에 추가 (누적)
+    socket.on('showHint', (data) => {
+        setCurrentHints(prev => [...prev, `[${data.type}] ${data.hint}`]);
+    });
+
     socket.on('correctAnswer', (data) => {
       const teamPrefix = data.team ? `(${data.team}팀) ` : '';
       setMessages(prev => [...prev, { type: 'answer', text: `🎉 [정답] ${teamPrefix}${data.user} 님이 맞혔습니다! (+${data.scoreGained}점)` }]);
-      setMessages(prev => [...prev, { type: 'answer_info', text: `🎵 ${data.artist} - ${data.answer}` }]);
-      setMessages(prev => [...prev, { type: 'answer_info', text: `📄 (원곡) ${data.originalLyrics}` }]);
-      setMessages(prev => [...prev, { type: 'answer_info', text: `🤔 (문제) ${data.translatedLyrics}` }]);
+      
+      setAnswerPopupData({
+        type: 'success',
+        user: data.user,
+        team: data.team,
+        scoreGained: data.scoreGained,
+        answer: data.answer,
+        artist: data.artist,
+        originalLyrics: data.originalLyrics,
+        translatedLyrics: data.translatedLyrics
+      });
     });
+
     socket.on('roundEnd', (data) => {
       setMessages(prev => [...prev, { type: 'answer', text: `⏰ [시간 종료]` }]);
-      setMessages(prev => [...prev, { type: 'answer_info', text: `🎵 ${data.artist} - ${data.answer}` }]);
-      setMessages(prev => [...prev, { type: 'answer_info', text: `📄 (원곡) ${data.originalLyrics}` }]);
-      setMessages(prev => [...prev, { type: 'answer_info', text: `🤔 (문제) ${data.translatedLyrics}` }]);
+      
+      setAnswerPopupData({
+        type: 'timeout',
+        answer: data.answer,
+        artist: data.artist,
+        originalLyrics: data.originalLyrics,
+        translatedLyrics: data.translatedLyrics
+      });
       setQuizLyrics('');
+      setCurrentHints([]); // [수정됨] 라운드 종료 시 힌트 초기화
     });
+
     socket.on('updatePlayers', (newPlayers) => {
       setRoomState(prev => {
         if (!prev) return prev; 
@@ -123,6 +147,7 @@ function App() {
       setMessages(prev => [...prev, { type: 'system', text: `🏁 [게임 종료] 모든 라운드가 끝났습니다! 최종 점수 확인` }]);
       setQuizLyrics('');
       setFinalScoreData({ scores, isTeamMode });
+      setAnswerPopupData(null); 
       setShowFinalScoreboard(true); 
       setView('lobby');
       setRoomState(prev => {
@@ -155,75 +180,29 @@ function App() {
     return Object.entries(players).sort(([, playerA], [, playerB]) => playerB.score - playerA.score);
   }, [roomState?.players]);
 
-  // ----------------------------------------------------------------
-  // 5. 모든 핸들러 함수 (Promise 적용)
-  // ----------------------------------------------------------------
-  
-  // [수정됨] 방 생성 핸들러: Promise 반환
+  // ... (핸들러 함수들은 이전과 동일하므로 생략 가능하지만 전체 코드 유지를 위해 포함) ...
   const handleCreateRoom = () => {
     return new Promise((resolve, reject) => {
-        if (!nickname.trim()) {
-            return reject("닉네임을 입력해주세요.");
-        }
-
-        // 성공/실패 리스너 정의
-        const onSuccess = (room) => {
-            cleanup();
-            resolve(room);
-        };
-        const onError = (err) => {
-            cleanup();
-            reject(err);
-        };
-        const cleanup = () => {
-            socket.off('updateLobby', onSuccess);
-            socket.off('error', onError);
-            clearTimeout(timer);
-        };
-
-        // 리스너 등록 (한 번만 실행되도록 once 사용 권장하지만, 로직상 off 처리함)
+        if (!nickname.trim()) { return reject("닉네임을 입력해주세요."); }
+        const onSuccess = (room) => { cleanup(); resolve(room); };
+        const onError = (err) => { cleanup(); reject(err); };
+        const cleanup = () => { socket.off('updateLobby', onSuccess); socket.off('error', onError); clearTimeout(timer); };
         socket.once('updateLobby', onSuccess);
         socket.once('error', onError);
-
-        // 타임아웃 설정 (5초)
-        const timer = setTimeout(() => {
-            cleanup();
-            reject("서버 응답 시간이 초과되었습니다.");
-        }, 5000);
-
+        const timer = setTimeout(() => { cleanup(); reject("서버 응답 시간이 초과되었습니다."); }, 5000);
         socket.emit('createRoom', { nickname });
     });
   };
 
-  // [수정됨] 방 참가 핸들러: Promise 반환
   const handleJoinRoom = () => {
     return new Promise((resolve, reject) => {
-        if (!nickname.trim() || !roomCode.trim()) {
-            return reject("닉네임과 방 코드를 입력해주세요.");
-        }
-
-        const onSuccess = (room) => {
-            cleanup();
-            resolve(room);
-        };
-        const onError = (err) => {
-            cleanup();
-            reject(err);
-        };
-        const cleanup = () => {
-            socket.off('updateLobby', onSuccess);
-            socket.off('error', onError);
-            clearTimeout(timer);
-        };
-
+        if (!nickname.trim() || !roomCode.trim()) { return reject("닉네임과 방 코드를 입력해주세요."); }
+        const onSuccess = (room) => { cleanup(); resolve(room); };
+        const onError = (err) => { cleanup(); reject(err); };
+        const cleanup = () => { socket.off('updateLobby', onSuccess); socket.off('error', onError); clearTimeout(timer); };
         socket.once('updateLobby', onSuccess);
         socket.once('error', onError);
-
-        const timer = setTimeout(() => {
-            cleanup();
-            reject("서버 응답 시간이 초과되었습니다.");
-        }, 5000);
-
+        const timer = setTimeout(() => { cleanup(); reject("서버 응답 시간이 초과되었습니다."); }, 5000);
         socket.emit('joinRoom', { nickname, roomCode: roomCode.toUpperCase() });
     });
   };
@@ -233,11 +212,8 @@ function App() {
     if (name === "songCollections") {
       const currentCollections = roomState.settings.songCollections || [];
       let newCollections;
-      if (checked) {
-        newCollections = [...currentCollections, value];
-      } else {
-        newCollections = currentCollections.filter(item => item !== value);
-      }
+      if (checked) { newCollections = [...currentCollections, value]; } 
+      else { newCollections = currentCollections.filter(item => item !== value); }
       socket.emit('updateSettings', { songCollections: newCollections });
     } else if (name === "isTeamMode") {
       socket.emit('updateSettings', { isTeamMode: checked });
@@ -246,24 +222,15 @@ function App() {
       socket.emit('updateSettings', { [name]: isNumeric ? Number(value) : value });
     }
   };
-  const handlePlayerReady = () => {
-    socket.emit('playerReady');
-  };
-  const handleStartGame = () => {
-    socket.emit('startGame');
-  };
-  const handleSelectTeam = (team) => {
-    socket.emit('selectTeam', { team });
-  };
+  const handlePlayerReady = () => { socket.emit('playerReady'); };
+  const handleStartGame = () => { socket.emit('startGame'); };
+  const handleSelectTeam = (team) => { socket.emit('selectTeam', { team }); };
   const handleMessageChange = (e) => {
     const value = e.target.value;
     setCurrentMessage(value);
-    if (value.trim() === '') {
-      setSuggestions([]);
-    } else {
-      const filtered = autocompleteList
-        .filter(title => title.toLowerCase().includes(value.toLowerCase()))
-        .slice(0, 5);
+    if (value.trim() === '') { setSuggestions([]); } 
+    else {
+      const filtered = autocompleteList.filter(title => title.toLowerCase().includes(value.toLowerCase())).slice(0, 5);
       setSuggestions(filtered);
     }
   };
@@ -281,84 +248,44 @@ function App() {
     window.history.pushState({}, '', '/');
   };
   const copyInviteLink = () => {
-    if (!roomState) return; // 방 정보가 없으면 복사 X
+    if (!roomState) return; 
     const link = `${window.location.origin}/${roomState.roomCode}`;
-    navigator.clipboard.writeText(link)
-      .then(() => alert('초대 링크가 복사되었습니다!'))
-      .catch(err => console.error('링크 복사 실패', err));
+    navigator.clipboard.writeText(link).then(() => alert('초대 링크가 복사되었습니다!')).catch(err => console.error('링크 복사 실패', err));
   };
   
-  // 6. 뷰 렌더링 (Switch문)
   const renderView = () => {
     switch(view) {
       case 'login':
-        return (
-          <LoginView
-            nickname={nickname}
-            setNickname={setNickname}
-            roomCode={roomCode}
-            setRoomCode={setRoomCode}
-            onCreateRoom={handleCreateRoom}
-            onJoinRoom={handleJoinRoom}
-          />
-        );
+        return <LoginView nickname={nickname} setNickname={setNickname} roomCode={roomCode} setRoomCode={setRoomCode} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} />;
       case 'joinLink':
-        return (
-          <JoinLinkView
-            nickname={nickname}
-            setNickname={setNickname}
-            roomCode={roomCode}
-            onJoinRoom={handleJoinRoom}
-            onGoBack={handleGoToLogin}
-          />
-        );
+        return <JoinLinkView nickname={nickname} setNickname={setNickname} roomCode={roomCode} onJoinRoom={handleJoinRoom} onGoBack={handleGoToLogin} />;
       case 'lobby':
         if (!roomState) return <div>로딩 중...</div>;
-        return (
-          <LobbyView
-            roomState={roomState}
-            myPlayerId={socket.id}
-            onGoBack={handleGoToLogin}
-            onCopyLink={copyInviteLink}
-            onUpdateSettings={handleUpdateSettings}
-            onSelectTeam={handleSelectTeam}
-            onReady={handlePlayerReady}
-            onStartGame={handleStartGame}
-            allSongCollections={allSongCollections}
-          />
-        );
+        return <LobbyView roomState={roomState} myPlayerId={socket.id} onGoBack={handleGoToLogin} onCopyLink={copyInviteLink} onUpdateSettings={handleUpdateSettings} onSelectTeam={handleSelectTeam} onReady={handlePlayerReady} onStartGame={handleStartGame} allSongCollections={allSongCollections} />;
       case 'game':
         if (!roomState) return <div>게임을 불러오는 중...</div>;
-        return (
-          <GameView
-            roomState={roomState}
-            quizLyrics={quizLyrics}
-            messages={messages}
-            teamScores={teamScores}
-            sortedScoreboard={sortedScoreboard}
-            suggestions={suggestions}
-            currentMessage={currentMessage}
-            onMessageChange={handleMessageChange}
-            onSubmitAnswer={submitAnswer}
-            onGoBack={handleGoToLogin}
-          />
-        );
-      default:
-        return <h2>알 수 없는 뷰: {view}</h2>;
+        return <GameView 
+          roomState={roomState} 
+          quizLyrics={quizLyrics} 
+          messages={messages} 
+          teamScores={teamScores} 
+          sortedScoreboard={sortedScoreboard} 
+          suggestions={suggestions} 
+          currentMessage={currentMessage} 
+          onMessageChange={handleMessageChange} 
+          onSubmitAnswer={submitAnswer} 
+          onGoBack={handleGoToLogin}
+          answerPopupData={answerPopupData} 
+          currentHints={currentHints} // [수정됨] prop 이름 변경 (Hint -> Hints)
+        />;
+      default: return <h2>알 수 없는 뷰: {view}</h2>;
     }
   };
 
-  // 7. 메인 렌더링
   return (
     <div className="App w-full min-h-screen text-center">
       {renderView()}
-      
-      {showFinalScoreboard && (
-        <FinalScoreboardPopup 
-          data={finalScoreData} 
-          onClose={() => setShowFinalScoreboard(false)}
-        />
-      )}
+      {showFinalScoreboard && <FinalScoreboardPopup data={finalScoreData} onClose={() => setShowFinalScoreboard(false)} />}
     </div>
   );
 }

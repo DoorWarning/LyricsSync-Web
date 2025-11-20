@@ -1,21 +1,20 @@
 // controllers/gameLogic.js
 const Song = require('../models/Song');
 
-// ⭐ 모든 방의 상태를 이 파일에서 관리
+// ⭐ 모든 방의 상태와 타이머를 이 파일에서 관리
 const rooms = {};
+const roomTimers = {};
 
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
 function clearRoomTimers(roomName) {
-  if (rooms[roomName] && rooms[roomName].gameTimers) {
-    clearTimeout(rooms[roomName].gameTimers.hintTimer);
-    clearTimeout(rooms[roomName].gameTimers.artistHintTimer);
-    clearTimeout(rooms[roomName].gameTimers.roundTimer);
-    clearTimeout(rooms[roomName].gameTimers.nextGameTimer);
-    rooms[roomName].gameTimers = {};
+  if (roomTimers[roomName]) {
+    Object.values(roomTimers[roomName]).forEach(clearTimeout);
   }
+  // Always ensure it's a fresh object for the next round
+  roomTimers[roomName] = {};
 }
 
 // ⭐ io 객체를 인자로 받아야 함
@@ -77,15 +76,18 @@ async function startNewRound(io, roomName) {
       collectionName: relevantCollection
     }); 
 
-    room.gameTimers.hintTimer = setTimeout(() => {
+    roomTimers[roomName].hintTimer = setTimeout(() => {
+      if (!rooms[roomName]) return; // 방 존재 여부 확인
       io.to(roomName).emit('showHint', { type: '초성', hint: room.gameState.currentHint });
     }, 30000);
 
-    room.gameTimers.artistHintTimer = setTimeout(() => {
+    roomTimers[roomName].artistHintTimer = setTimeout(() => {
+      if (!rooms[roomName]) return; // 방 존재 여부 확인
       io.to(roomName).emit('showHint', { type: '가수', hint: room.gameState.currentArtistHint });
     }, 45000);
 
-    room.gameTimers.roundTimer = setTimeout(() => {
+    roomTimers[roomName].roundTimer = setTimeout(() => {
+      if (!rooms[roomName]) return; // 방 존재 여부 확인
       io.to(roomName).emit('roundEnd', { 
         answer: room.gameState.currentAnswer,
         artist: room.gameState.currentArtistHint,
@@ -94,7 +96,8 @@ async function startNewRound(io, roomName) {
       });
       room.gameState.currentAnswer = null;
       
-      room.gameTimers.nextGameTimer = setTimeout(() => {
+      roomTimers[roomName].nextGameTimer = setTimeout(() => {
+        if (!rooms[roomName]) return; // 방 존재 여부 확인
         startNewRound(io, roomName); // ⭐ io 전달
       }, 5000);
     }, 60000);
@@ -108,6 +111,7 @@ async function startNewRound(io, roomName) {
 // ⭐ 모듈로 내보내기
 module.exports = {
   rooms,
+  roomTimers,
   generateRoomCode,
   clearRoomTimers,
   startNewRound,
