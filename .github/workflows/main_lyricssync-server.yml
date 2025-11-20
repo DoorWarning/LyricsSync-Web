@@ -21,14 +21,17 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '22.x'
+          node-version: '20.x' # 안정적인 LTS 버전 권장
 
       - name: npm install, build, and test
+        # ⭐ [수정] 명령어를 실행할 폴더 지정 (가장 중요!)
+        working-directory: lyrics-sync-server
         run: |
           npm install
           npm run build --if-present
           npm run test --if-present
 
+      # ⭐ [유지] 시작 명령어(node lyrics-sync-server/index.js)와 경로를 맞추기 위해 전체 업로드
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -62,4 +65,3 @@ jobs:
           app-name: 'LyricsSync-server'
           slot-name: 'Production'
           package: .
-          
