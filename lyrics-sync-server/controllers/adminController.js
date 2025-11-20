@@ -1,6 +1,7 @@
 // controllers/adminController.js
 const Song = require('../models/Song');
 const geminiModel = require('../config/gemini');
+const { exec } = require('child_process');
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 let adminToken = null; // (간단한 임시 토큰)
@@ -116,4 +117,21 @@ exports.generateTranslation = async (req, res) => {
     console.error('Gemini API Error:', err);
     res.status(500).json({ success: false, message: 'Gemini API 오류: ' + err.message });
   }
+};
+
+// ⭐ [새로 추가] Webhook 수신 및 배포 실행 로직
+exports.handleWebhook = (req, res) => {
+  console.log('--- GitHub Webhook 수신: 서버 업데이트 시작 ---');
+  // 즉시 200 OK 응답을 보내 GitHub 타임아웃을 방지합니다.
+  res.status(200).send('Webhook received. Starting deployment script.');
+
+  // deploy.sh 스크립트 비동기 실행 (서버 프로세스는 계속 유지)
+  exec('./deploy.sh', { cwd: __dirname + '/../' }, (error, stdout, stderr) => { // ⭐ cwd를 서버 루트로 설정
+    if (error) {
+      console.error(`Deployment failed: ${error}`);
+      return;
+    }
+    console.log(`stdout: ${stdout}`);
+    console.error(`stderr: ${stderr}`);
+  });
 };
