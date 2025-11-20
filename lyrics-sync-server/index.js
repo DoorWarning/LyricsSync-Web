@@ -25,8 +25,10 @@ const PORT = process.env.PORT || 3001;
 // 3. API 라우트 등록
 const adminRoutes = require('./routes/adminRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const webhookRoutes = require('./routes/webhookRoutes');
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/webhook', webhookRoutes);
 
 // 4. 소켓 핸들러 등록
 const socketHandler = require('./sockets/socketHandler');
