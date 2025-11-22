@@ -1,9 +1,12 @@
-// src/App.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 import './global.css'; 
 
+// Context
+import { useSound } from './context/SoundContext';
+
+// Views
 import LoginView from './views/LoginView';
 import JoinLinkView from './views/JoinLinkView';
 import LobbyView from './views/LobbyView';
@@ -13,7 +16,33 @@ import FinalScoreboardPopup from './components/FinalScoreboardPopup';
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 const socket = io(SERVER_URL);
 
+// --- [오디오 미리 로드] 게임 상태 및 타이머 ---
+const questionAudio = new Audio('/sounds/question.ogg');
+const correctAudio = new Audio('/sounds/correct.ogg');
+const incorrectAudio = new Audio('/sounds/incorrect.ogg');
+const endAudio = new Audio('/sounds/end.ogg');
+const timerAudio = new Audio('/sounds/timer.ogg');
+const urgentTimerAudio = new Audio('/sounds/timer2.ogg'); // 10초 이하용
+
+// 볼륨 설정
+questionAudio.volume = 0.5;
+correctAudio.volume = 0.6;
+incorrectAudio.volume = 0.5;
+endAudio.volume = 0.6;
+timerAudio.volume = 0.3; 
+urgentTimerAudio.volume = 0.4;
+
+// Preload
+questionAudio.preload = 'auto';
+correctAudio.preload = 'auto';
+incorrectAudio.preload = 'auto';
+endAudio.preload = 'auto';
+timerAudio.preload = 'auto';
+urgentTimerAudio.preload = 'auto';
+
 function App() {
+  const { playSound } = useSound(); // SoundContext 사용
+
   const [view, setView] = useState('login'); 
   const [nickname, setNickname] = useState('');
   const [roomCode, setRoomCode] = useState('');
@@ -28,10 +57,10 @@ function App() {
   const [showFinalScoreboard, setShowFinalScoreboard] = useState(false);
   const [finalScoreData, setFinalScoreData] = useState({ scores: {}, isTeamMode: false });
   
-  // [추가] 힌트 및 팝업 상태
   const [currentHints, setCurrentHints] = useState([]); 
   const [answerPopupData, setAnswerPopupData] = useState(null);
 
+  // 4. 초기 데이터 로딩
   useEffect(() => {
     const path = window.location.pathname;
     if (path.length > 1) {
@@ -39,9 +68,6 @@ function App() {
       setRoomCode(codeFromUrl);
       setView('joinLink');
     }
-  }, []);
-  
-  useEffect(() => {
     const fetchCollections = async () => {
       try {
         const response = await axios.get(`${SERVER_URL}/api/public/collections`);
@@ -56,6 +82,7 @@ function App() {
     fetchCollections();
   }, []);
 
+  // 5. 소켓 이벤트 리스너
   useEffect(() => {
     const onUpdateLobby = (room) => {
       setRoomState(room);
@@ -75,6 +102,8 @@ function App() {
     };
 
     const onNewQuiz = (quiz) => {
+      playSound(questionAudio); // 문제 출제음
+      
       setQuizLyrics(`[${quiz.collectionName}] (라운드 ${quiz.currentRound}/${quiz.maxRounds})\n${quiz.lyrics}`);
       setMessages([]); 
       setCurrentHints([]); 
@@ -86,7 +115,7 @@ function App() {
             gameState: { 
                 ...prev.gameState, 
                 currentRound: quiz.currentRound,
-                roundEndTime: quiz.roundEndTime // [추가] 종료 시간 업데이트
+                roundEndTime: quiz.roundEndTime 
             }
         };
       });
@@ -94,13 +123,13 @@ function App() {
 
     const onReceiveMessage = (text) => setMessages(prev => [...prev, { type: 'chat', text }]);
     
-    // [수정] 힌트는 채팅창이 아닌 별도 배열에 저장
     const onShowHint = (data) => {
       setCurrentHints(prev => [...prev, data.hint]);
     };
     
-    // [수정] 정답 시 팝업 표시 (채팅 X)
     const onCorrectAnswer = (data) => {
+      playSound(correctAudio); // 정답음
+
       setAnswerPopupData({
         type: 'success',
         user: data.user,
@@ -111,12 +140,12 @@ function App() {
         originalLyrics: data.originalLyrics,
         translatedLyrics: data.translatedLyrics
       });
-      // 정답 맞히면 로컬 타이머 UI 멈추기 위해 종료시간 제거
       setRoomState(prev => prev ? { ...prev, gameState: { ...prev.gameState, roundEndTime: null }} : null);
     };
 
-    // [수정] 라운드 종료 시 팝업 표시 (채팅 X)
     const onRoundEnd = (data) => {
+      playSound(incorrectAudio); // 오답/시간초과음
+
       setAnswerPopupData({
         type: 'fail',
         artist: data.artist,
@@ -132,6 +161,8 @@ function App() {
     const onUpdateTeamScoreboard = (newTeamScores) => setTeamScores(newTeamScores);
 
     const onGameOver = ({ scores, isTeamMode }) => {
+      playSound(endAudio); // 게임 종료음
+
       setMessages(prev => [...prev, { type: 'system', text: `🏁 [게임 종료] 게임이 끝났습니다!` }]);
       setQuizLyrics('');
       setFinalScoreData({ scores, isTeamMode });
@@ -177,6 +208,7 @@ function App() {
     return Object.entries(players).sort(([, playerA], [, playerB]) => playerB.score - playerA.score);
   }, [roomState?.players]);
 
+  // 6. 액션 핸들러
   const handleCreateRoom = () => {
     return new Promise((resolve, reject) => {
         if (!nickname.trim()) return reject("닉네임을 입력해주세요.");
@@ -238,10 +270,9 @@ function App() {
     setSuggestions([]);
   };
 
-  // [수정] 나가기 시 서버에 이벤트 전송 (유령 유저 방지)
   const handleGoToLogin = () => {
     if (roomCode) {
-        socket.emit('leaveRoom');
+        socket.emit('leaveRoom'); // 유령 유저 방지
     }
     setView('login');
     setRoomState(null);
@@ -266,7 +297,9 @@ function App() {
         return <LobbyView roomState={roomState} myPlayerId={socket.id} onGoBack={handleGoToLogin} onCopyLink={copyInviteLink} onUpdateSettings={handleUpdateSettings} onSelectTeam={handleSelectTeam} onReady={handlePlayerReady} onStartGame={handleStartGame} allSongCollections={allSongCollections} />;
       case 'game':
         if (!roomState) return <div>게임을 불러오는 중...</div>;
-        return <GameView roomState={roomState} quizLyrics={quizLyrics} messages={messages} teamScores={teamScores} sortedScoreboard={sortedScoreboard} suggestions={suggestions} currentMessage={currentMessage} onMessageChange={handleMessageChange} onSubmitAnswer={submitAnswer} onGoBack={handleGoToLogin} currentHints={currentHints} answerPopupData={answerPopupData} />;
+        return <GameView roomState={roomState} quizLyrics={quizLyrics} messages={messages} teamScores={teamScores} sortedScoreboard={sortedScoreboard} suggestions={suggestions} currentMessage={currentMessage} onMessageChange={handleMessageChange} onSubmitAnswer={submitAnswer} onGoBack={handleGoToLogin} currentHints={currentHints} answerPopupData={answerPopupData} 
+        timerAudio={timerAudio} urgentTimerAudio={urgentTimerAudio} // 타이머 오디오 전달
+        />;
       default: return <h2>알 수 없는 뷰: {view}</h2>;
     }
   };
