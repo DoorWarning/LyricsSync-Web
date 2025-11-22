@@ -20,27 +20,44 @@
 * [**원페이저 (One-Pager) 바로가기](./PRD/onepager.pdf)**
 
 
-### LyricsSync 게임 스크린샷
+### 📸 LyricsSync 게임 스크린샷
 
-* 메인 화면
-![desktop](PRD/Screenshoot/MainDesktop.png)
-![Mobile](PRD/Screenshoot/MainMobile.png)
-
-* 로비 화면
-![desktop](PRD/Screenshoot/LobbyDesktop.png)
-![Mobile](PRD/Screenshoot/LobbyMobile.png)
-
-* 게임 화면
-![desktop](PRD/Screenshoot/GameDesktop.png)
-![Mobile](PRD/Screenshoot/GameMobile.png)
-
-* 정답 화면
-![desktop](PRD/Screenshoot/PopupDesktop.png)
-![Mobile](PRD/Screenshoot/PopupMobile.png)
-
-* 점수 및 순위 화면
-![desktop](PRD/Screenshoot/RankDesktop.png)
-![Mobile](PRD/Screenshoot/RankMobile.png)
+<table>
+  <thead>
+    <tr>
+      <th width="15%" align="center">화면 (Screen)</th>
+      <th width="55%" align="center">Desktop</th>
+      <th width="30%" align="center">Mobile</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>메인 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/MainDesktop.png" height="250px" alt="Main Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/MainMobile.png" height="250px" alt="Main Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>로비 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/LobbyDesktop.png" height="250px" alt="Lobby Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/LobbyMobile.png" height="250px" alt="Lobby Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>게임 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/GameDesktop.png" height="250px" alt="Game Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/GameMobile.png" height="250px" alt="Game Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>정답 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/PopupDesktop.png" height="250px" alt="Popup Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/PopupMobile.png" height="250px" alt="Popup Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>순위 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/RankDesktop.png" height="250px" alt="Rank Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/RankMobile.png" height="250px" alt="Rank Mobile"></td>
+    </tr>
+  </tbody>
+</table>
 
 ---
 
