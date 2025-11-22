@@ -20,8 +20,28 @@
 * [**원페이저 (One-Pager) 바로가기](./PRD/onepager.pdf)**
 
 
-`[LyricsSync 게임 스크린샷]`
-*test
+### LyricsSync 게임 스크린샷
+
+* 메인 화면
+![desktop](PRD/Screenshoot/MainDesktop.png)
+![Mobile](PRD/Screenshoot/MainMobile.png)
+
+* 로비 화면
+![desktop](PRD/Screenshoot/LobbyDesktop.png)
+![Mobile](PRD/Screenshoot/LobbyMobile.png)
+
+* 게임 화면
+![desktop](PRD/Screenshoot/GameDesktop.png)
+![Mobile](PRD/Screenshoot/GameMobile.png)
+
+* 정답 화면
+![desktop](PRD/Screenshoot/PopupDesktop.png)
+![Mobile](PRD/Screenshoot/PopupMobile.png)
+
+* 점수 및 순위 화면
+![desktop](PRD/Screenshoot/RankDesktop.png)
+![Mobile](PRD/Screenshoot/RankMobile.png)
+
 ---
 
 ## 🌎 프로젝트 구조
