@@ -11,26 +11,30 @@ const RequestList = ({ user, token, onRequestHandled, apiUrl }) => {
 
   const fetchRequests = async () => {
     try {
+      // ⭐ [수정] JWT 표준(Bearer) 헤더 적용
       const response = await axios.get(`${apiUrl}/requests`, {
-        headers: { 'Authorization': token, 'x-user-email': user.email }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       setRequests(response.data.requests);
     } catch (err) {
       console.error(err);
+      // (선택) 에러 처리 로직 추가
+      // alert('요청 목록을 불러오지 못했습니다.');
     }
   };
 
   const handleAction = async (requestId, action) => { 
     if (!window.confirm(`${action === 'approve' ? '승인' : '거절'} 하시겠습니까?`)) return;
     try {
+      // ⭐ [수정] JWT 표준(Bearer) 헤더 적용
       const response = await axios.post(`${apiUrl}/requests/${requestId}/${action}`, {}, {
-        headers: { 'Authorization': token, 'x-user-email': user.email }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       alert(response.data.message);
       fetchRequests(); 
       if (action === 'approve') onRequestHandled(); 
     } catch (err) {
-      alert('처리 실패: ' + err.response?.data?.message);
+      alert('처리 실패: ' + (err.response?.data?.message || err.message));
     }
   };
 

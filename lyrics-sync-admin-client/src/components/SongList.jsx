@@ -23,7 +23,8 @@ const SongList = ({ songs, user, token, onSongDeleted, setEditingSong, apiUrl })
   }, [songs]);
 
   const handleDelete = async (songId) => {
-    const headers = { 'Authorization': token, 'x-user-email': user.email };
+    // ⭐ [수정] JWT 표준(Bearer) 헤더 적용
+    const headers = { 'Authorization': `Bearer ${token}` };
     
     if (isAdmin) {
       if (!window.confirm('정말로 삭제하시겠습니까? (즉시 삭제)')) return;
@@ -31,7 +32,9 @@ const SongList = ({ songs, user, token, onSongDeleted, setEditingSong, apiUrl })
         await axios.delete(`${apiUrl}/songs/${songId}`, { headers });
         onSongDeleted(songId);
         alert('삭제되었습니다.');
-      } catch (err) { alert('삭제 실패: ' + err.message); }
+      } catch (err) { 
+        alert('삭제 실패: ' + (err.response?.data?.message || err.message)); 
+      }
     } else {
       if (!window.confirm('삭제 요청을 보내시겠습니까?')) return;
       try {
@@ -40,7 +43,9 @@ const SongList = ({ songs, user, token, onSongDeleted, setEditingSong, apiUrl })
           targetSongId: songId 
         }, { headers });
         alert('삭제 요청이 전송되었습니다.');
-      } catch (err) { alert('요청 실패: ' + err.message); }
+      } catch (err) { 
+        alert('요청 실패: ' + (err.response?.data?.message || err.message)); 
+      }
     }
   };
 
