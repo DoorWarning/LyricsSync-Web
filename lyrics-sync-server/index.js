@@ -17,8 +17,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://your-client-url.vercel.app', // ⭐ 본인의 실제 배포 주소로 수정 필요
-  'https://your-admin-url.vercel.app'
+  'https://lyrics-sync-client.vercel.app', // ⭐ 본인의 실제 배포 주소로 수정 필요
+  'https://lyrics-sync-admin-client.vercel.app'
 ];
 
 app.use(cors({
