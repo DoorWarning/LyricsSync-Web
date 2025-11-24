@@ -8,51 +8,69 @@ import './admin.css';
 import LoginView from './views/LoginView';
 import DashboardView from './views/DashboardView';
 
-// 서버 API 주소 (.env에서 로드)
+// ⭐ [NEW] 커스텀 팝업 컴포넌트 임포트
+import AlertModal from './components/AlertModal'; 
+
+// 서버 API 주소
 const API_URL = `${import.meta.env.VITE_SERVER_URL}/api/admin`;
 
 function App() {
   // ----------------------------------------------------------------
-  // 상태 관리 (State Management)
+  // 상태 관리
   // ----------------------------------------------------------------
-  const [user, setUser] = useState(null); // { email, name, role }
-  const [token, setToken] = useState(null); // JWT 토큰
+  const [user, setUser] = useState(null); 
+  const [token, setToken] = useState(null); 
   const [songs, setSongs] = useState([]);
   const [editingSong, setEditingSong] = useState(null); 
-  const [activeTab, setActiveTab] = useState('songs'); // 'songs' | 'requests'
+  const [activeTab, setActiveTab] = useState('songs');
   const [error, setError] = useState('');
 
-  // SongForm의 입력 데이터 (QuizMaker와 연동하기 위해 상위에서 관리)
+  // 커스텀 팝업 상태
+  const [customAlert, setCustomAlert] = useState(null);
+
+  // SongForm 데이터
   const [formData, setFormData] = useState({
-    title: '',
-    artist: '',
-    original_lyrics: '',
-    translated_lyrics: '',
-    hint: '',
-    collectionNames: 'kpop-classics',
+    title: '', artist: '', original_lyrics: '', translated_lyrics: '', 
+    hint: '', collectionNames: 'kpop-classics',
   });
 
   // ----------------------------------------------------------------
-  // 효과 및 핸들러 (Effects & Handlers)
+  // 팝업 핸들러
+  // ----------------------------------------------------------------
+  const handleShowAlert = (message, type = 'success') => {
+    setCustomAlert({ message, type });
+  };
+  
+  const handleShowConfirm = (message, confirmAction) => {
+    setCustomAlert({ message, type: 'confirm', confirmAction });
+  };
+
+  // ----------------------------------------------------------------
+  // 초기화 및 로그인 로직
   // ----------------------------------------------------------------
 
-  // 초기 로드 시 로컬 스토리지에서 로그인 정보 복원
+  // 1. 앱 시작 시 로컬 스토리지 확인
   useEffect(() => {
     const storedToken = localStorage.getItem('adminToken');
     const storedUser = localStorage.getItem('adminUser');
     
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("JSON Parse Error", e);
+        handleLogout();
+      }
     }
   }, []);
 
-  // 로그인 성공 시 노래 목록 로딩
+  // 2. 로그인 성공 시 노래 목록 로딩
   useEffect(() => {
     if (user && token) fetchSongs();
   }, [user, token]);
 
-  // 노래 목록 가져오기 API
+  // 3. 노래 목록 가져오기
   const fetchSongs = async () => {
     try {
       const response = await axios.get(`${API_URL}/songs`, {
@@ -61,14 +79,13 @@ function App() {
       if (response.data.success) setSongs(response.data.songs);
     } catch (err) {
       console.error("Load failed", err);
-      // 토큰 만료 시 로그아웃 처리
       if (err.response && err.response.status === 401) {
-        handleLogout();
+        handleLogout(); // 토큰 만료 시 튕겨내기
       }
     }
   };
 
-  // 구글 로그인 성공 핸들러
+  // 4. 구글 로그인 핸들러
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const response = await axios.post(`${API_URL}/google-login`, {
@@ -78,11 +95,9 @@ function App() {
       if (response.data.success) {
         const { token: newToken, user: newUser } = response.data;
         
-        // 상태 업데이트
         setUser(newUser); 
         setToken(newToken); 
         
-        // 로컬 스토리지 저장 (새로고침 시 유지)
         localStorage.setItem('adminToken', newToken);
         localStorage.setItem('adminUser', JSON.stringify(newUser));
         
@@ -93,7 +108,7 @@ function App() {
     }
   };
 
-  // 로그아웃 핸들러
+  // 5. 로그아웃 핸들러
   const handleLogout = () => {
     setUser(null);
     setToken(null);
@@ -104,21 +119,24 @@ function App() {
   };
 
   // ----------------------------------------------------------------
-  // 뷰 렌더링 (View Rendering)
+  // 뷰 렌더링 (여기가 핵심입니다!)
   // ----------------------------------------------------------------
 
-  // 1. 로그인 전: 로그인 화면 표시
+  // ⭐ [핵심] user가 없으면 LoginView만 리턴하고 여기서 끝냅니다.
+  // 아래의 DashboardView는 실행조차 되지 않습니다.
   if (!user) {
     return (
-      <LoginView 
-        onGoogleSuccess={handleGoogleSuccess} 
-        onError={() => setError('Google Login Failed')} 
-        error={error}
-      />
+      <div className="App">
+        <LoginView 
+          onGoogleSuccess={handleGoogleSuccess} 
+          onError={() => setError('Google Login Failed')} 
+          error={error}
+        />
+      </div>
     );
   }
 
-  // 2. 로그인 후: 대시보드 화면 표시
+  // ⭐ user가 있을 때만 여기가 실행됩니다.
   return (
     <div className="App">
       <DashboardView 
@@ -126,23 +144,26 @@ function App() {
         token={token}
         apiUrl={API_URL}
         
-        // 노래 데이터 및 함수
         songs={songs}
         fetchSongs={fetchSongs}
         
-        // 수정 상태 및 함수
         editingSong={editingSong}
         setEditingSong={setEditingSong}
         
-        // 폼 데이터 및 함수
         formData={formData}
         setFormData={setFormData}
         
-        // 탭 및 로그아웃
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onLogout={handleLogout}
+        
+        // 팝업 핸들러 전달
+        showAlert={handleShowAlert}
+        showConfirm={handleShowConfirm}
       />
+
+      {/* 커스텀 팝업 렌더링 */}
+      <AlertModal customAlert={customAlert} setCustomAlert={setCustomAlert} />
     </div>
   );
 }

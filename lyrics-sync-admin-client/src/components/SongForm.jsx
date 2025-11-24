@@ -2,8 +2,10 @@
 import React, { useEffect } from 'react';
 import axios from 'axios';
 
-const SongForm = ({ user, token, editingSong, setEditingSong, refreshSongs, formData, setFormData, apiUrl }) => {
-  const isAdmin = user.role === 'admin';
+const SongForm = ({ user, token, editingSong, setEditingSong, refreshSongs, formData, setFormData, apiUrl, showAlert, showConfirm }) => {
+  
+  // ⭐ [수정] user가 null일 경우를 대비해 '?.' (Optional Chaining) 사용
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     if (editingSong) {
@@ -31,37 +33,44 @@ const SongForm = ({ user, token, editingSong, setEditingSong, refreshSongs, form
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // ⭐ [수정] JWT 표준 방식(Bearer)으로 헤더 설정
+    // ⭐ [안전장치] 유저 정보가 없으면 실행 중단
+    if (!user) return;
+
+    // Authorization 헤더에 Bearer 토큰 사용
     const headers = { 'Authorization': `Bearer ${token}` };
     
-    try {
-      if (isAdmin) {
-        if (editingSong) {
-          await axios.put(`${apiUrl}/songs/${editingSong._id}`, formData, { headers });
-          alert('수정 완료!');
-        } else {
-          await axios.post(`${apiUrl}/songs`, formData, { headers });
-          alert('등록 완료!');
+    const action = async () => {
+        try {
+            if (isAdmin) {
+                if (editingSong) {
+                    await axios.put(`${apiUrl}/songs/${editingSong._id}`, formData, { headers });
+                    showAlert('수정 완료!', 'success');
+                } else {
+                    await axios.post(`${apiUrl}/songs`, formData, { headers });
+                    showAlert('등록 완료!', 'success');
+                }
+            } else {
+                const requestBody = {
+                    requestType: editingSong ? 'update' : 'create',
+                    targetSongId: editingSong ? editingSong._id : null,
+                    data: formData
+                };
+                await axios.post(`${apiUrl}/request`, requestBody, { headers });
+                showAlert('수정 요청이 전송되었습니다. 관리자 승인을 기다리세요.', 'success');
+            }
+            
+            refreshSongs(); 
+            if (!editingSong) { 
+                setFormData(prev => ({ ...prev, title: '', artist: '', original_lyrics: '', translated_lyrics: '', hint: '' }));
+            } else {
+                setEditingSong(null);
+            }
+        } catch (err) {
+            showAlert('작업 실패: ' + (err.response?.data?.message || err.message), 'error');
         }
-      } else {
-        const requestBody = {
-          requestType: editingSong ? 'update' : 'create',
-          targetSongId: editingSong ? editingSong._id : null,
-          data: formData
-        };
-        await axios.post(`${apiUrl}/request`, requestBody, { headers });
-        alert('수정 요청이 전송되었습니다. 관리자 승인을 기다리세요.');
-      }
-      
-      refreshSongs();
-      if (!editingSong) {
-        setFormData(prev => ({ ...prev, title: '', artist: '', original_lyrics: '', translated_lyrics: '', hint: '' }));
-      } else {
-        setEditingSong(null);
-      }
-    } catch (err) {
-      alert('작업 실패: ' + (err.response?.data?.message || err.message));
-    }
+    };
+
+    action(); 
   };
 
   return (

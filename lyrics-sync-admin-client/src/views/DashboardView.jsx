@@ -11,10 +11,13 @@ const DashboardView = ({
   songs, fetchSongs, 
   editingSong, setEditingSong, 
   formData, setFormData, 
-  activeTab, setActiveTab, onLogout 
+  activeTab, setActiveTab, onLogout,
+  // 커스텀 팝업 핸들러
+  showAlert, showConfirm
 }) => {
   return (
     <>
+      {/* ⭐ [수정] AdminHeader에 필요한 Props를 빠짐없이 전달 */}
       <AdminHeader 
         user={user} 
         activeTab={activeTab} 
@@ -28,7 +31,14 @@ const DashboardView = ({
           <>
             {/* 왼쪽 패널: 생성 도구 */}
             <div className="dashboard-left">
-              <QuizMaker user={user} token={token} setFormData={setFormData} apiUrl={apiUrl} />
+              <QuizMaker 
+                user={user} 
+                token={token} 
+                setFormData={setFormData} 
+                apiUrl={apiUrl} 
+                showAlert={showAlert} 
+              />
+              
               <SongForm 
                 user={user}
                 token={token}
@@ -38,6 +48,8 @@ const DashboardView = ({
                 formData={formData}
                 setFormData={setFormData}
                 apiUrl={apiUrl}
+                showAlert={showAlert} 
+                showConfirm={showConfirm}
               />
             </div>
             
@@ -47,9 +59,11 @@ const DashboardView = ({
                 songs={songs} 
                 user={user}
                 token={token} 
-                onSongDeleted={fetchSongs}
+                onSongDeleted={fetchSongs} 
                 setEditingSong={setEditingSong}
                 apiUrl={apiUrl}
+                showAlert={showAlert} 
+                showConfirm={showConfirm}
               />
             </div>
           </>
@@ -57,8 +71,15 @@ const DashboardView = ({
 
         {/* 탭 2: 요청 관리 (관리자 전용) */}
         {activeTab === 'requests' && user.role === 'admin' && (
-          <div style={{ width: '100%' }}>
-            <RequestList user={user} token={token} onRequestHandled={fetchSongs} apiUrl={apiUrl} />
+          <div className="dashboard-right">
+            <RequestList 
+              user={user} 
+              token={token} 
+              onRequestHandled={fetchSongs} 
+              apiUrl={apiUrl} 
+              showAlert={showAlert} 
+              showConfirm={showConfirm} 
+            />
           </div>
         )}
       </main>

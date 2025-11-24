@@ -2,9 +2,11 @@
 import React, { useState, useMemo } from 'react';
 import axios from 'axios';
 
-const SongList = ({ songs, user, token, onSongDeleted, setEditingSong, apiUrl }) => {
+const SongList = ({ songs, user, token, onSongDeleted, setEditingSong, apiUrl, showAlert, showConfirm }) => {
   const [expandedCollections, setExpandedCollections] = useState({});
-  const isAdmin = user.role === 'admin';
+  
+  // ⭐ [수정] user가 null일 경우를 대비해 '?.' 사용
+  const isAdmin = user?.role === 'admin';
 
   const groupedSongs = useMemo(() => {
     return songs.reduce((acc, song) => {
@@ -22,31 +24,29 @@ const SongList = ({ songs, user, token, onSongDeleted, setEditingSong, apiUrl })
     }, {});
   }, [songs]);
 
-  const handleDelete = async (songId) => {
-    // ⭐ [수정] JWT 표준(Bearer) 헤더 적용
+  const handleDelete = (songId, isDeleteRequest) => {
     const headers = { 'Authorization': `Bearer ${token}` };
+    const isDeleteImmediate = isAdmin && !isDeleteRequest;
+
+    const action = async () => {
+      try {
+        if (isDeleteImmediate) {
+          // 관리자: 즉시 삭제
+          await axios.delete(`${apiUrl}/songs/${songId}`, { headers });
+          showAlert('삭제되었습니다.', 'success');
+        } else {
+          // 일반 유저: 삭제 요청
+          await axios.post(`${apiUrl}/request`, { requestType: 'delete', targetSongId: songId }, { headers });
+          showAlert('삭제 요청이 전송되었습니다.', 'success');
+        }
+        onSongDeleted(songId); 
+      } catch (err) {
+        showAlert('삭제 실패: ' + (err.response?.data?.message || err.message), 'error');
+      }
+    };
     
-    if (isAdmin) {
-      if (!window.confirm('정말로 삭제하시겠습니까? (즉시 삭제)')) return;
-      try {
-        await axios.delete(`${apiUrl}/songs/${songId}`, { headers });
-        onSongDeleted(songId);
-        alert('삭제되었습니다.');
-      } catch (err) { 
-        alert('삭제 실패: ' + (err.response?.data?.message || err.message)); 
-      }
-    } else {
-      if (!window.confirm('삭제 요청을 보내시겠습니까?')) return;
-      try {
-        await axios.post(`${apiUrl}/request`, { 
-          requestType: 'delete', 
-          targetSongId: songId 
-        }, { headers });
-        alert('삭제 요청이 전송되었습니다.');
-      } catch (err) { 
-        alert('요청 실패: ' + (err.response?.data?.message || err.message)); 
-      }
-    }
+    const message = isDeleteImmediate ? '정말로 삭제하시겠습니까? (즉시 반영)' : '삭제 요청을 보내시겠습니까?';
+    showConfirm(message, action);
   };
 
   const toggleCollection = (name) => {
@@ -77,7 +77,7 @@ const SongList = ({ songs, user, token, onSongDeleted, setEditingSong, apiUrl })
                         <button onClick={() => setEditingSong(song)} className="btn-blue" style={{ marginRight: '5px' }}>
                           {isAdmin ? '수정' : '수정 요청'}
                         </button>
-                        <button onClick={() => handleDelete(song._id)} className="btn-primary">
+                        <button onClick={() => handleDelete(song._id, !isAdmin)} className="btn-primary">
                           {isAdmin ? '삭제' : '삭제 요청'}
                         </button>
                       </td>
