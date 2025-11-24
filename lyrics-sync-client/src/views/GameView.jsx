@@ -83,7 +83,7 @@ const AnswerPopup = ({ data }) => {
 
 const TeamMemberCard = ({ player }) => (<div className="flex items-center gap-2 bg-black/20 rounded-lg p-2 min-w-0"><img src={getAvatar(player.avatar || 'av_1')} alt={player.nickname} className="w-6 h-6 md:w-8 md:h-8 rounded-full border border-white/30 bg-slate-800 flex-shrink-0"/><span className="text-xs md:text-sm font-bold text-white truncate">{player.nickname}</span></div>);
 
-const GameView = ({ roomState, quizLyrics = '', messages = [], teamScores = { A: 0, B: 0 }, sortedScoreboard = [], suggestions = [], currentMessage = '', onMessageChange, onSubmitAnswer, onGoBack, answerPopupData = null, currentHints = [], timerAudio, urgentTimerAudio }) => {
+const GameView = ({ roomState, quizLyrics = '', messages = [], teamScores = { A: 0, B: 0 }, sortedScoreboard = [], suggestions = [], currentMessage = '', onMessageChange, onSubmitAnswer, onGoBack, answerPopupData = null, currentHints = [], timerAudio, urgentTimerAudio, onOpenDescription }) => {
   const chatScrollRef = useRef(null);
   const [activeTab, setActiveTab] = useState('game');
   const inputControls = useAnimation();
@@ -128,7 +128,10 @@ const GameView = ({ roomState, quizLyrics = '', messages = [], teamScores = { A:
       <div className="flex justify-between items-center mb-2 flex-shrink-0">
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => { playSound(buttonAudio); onGoBack(); }} className="bg-indigo-900 text-slate-200 font-bold py-2 px-4 text-sm md:text-lg rounded-2xl hover:bg-indigo-800 transition md:py-3 md:px-8 md:!text-2xl">나가기</motion.button>
         <div className="flex flex-col items-center"><img src={robotSvg} alt="Robot Logo" className="w-8 h-8 md:w-12 md:h-12 mb-1" /><h2 className="text-xs md:text-lg text-slate-400">게임 진행 중</h2><p className="text-xl md:text-2xl font-bold text-rose-500 tracking-widest">{roomCode}</p></div>
-        <div className="flex justify-end w-16 md:w-24"><VolumeControl /></div>
+        <div className="flex justify-end w-24">
+            {/* ⭐ [수정] VolumeControl에 onOpenDescription 전달 */}
+            <VolumeControl onOpenDescription={onOpenDescription} />
+        </div>
       </div>
 
       <div className="flex md:hidden w-full bg-indigo-900/50 rounded-xl p-1 mb-2 flex-shrink-0">

@@ -125,7 +125,7 @@ const ActionButtons = ({ isHost, myPlayer, settings, onCopyLink, onStartGame, on
     );
 };
 
-const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelectTeam, onReady, onStartGame, allSongCollections }) => {
+const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelectTeam, onReady, onStartGame, allSongCollections, onOpenDescription }) => {
   const [alertInfo, setAlertInfo] = useState({ isOpen: false, message: '', type: 'error' });
   const [activeTab, setActiveTab] = useState('players'); 
   const { playSound } = useSound();
@@ -186,7 +186,10 @@ const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelect
       <div className="flex justify-between items-center mb-6">
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => { playSound(buttonAudio); onGoBack(); }} className="bg-indigo-900 text-slate-200 font-bold py-2 px-4 text-lg rounded-2xl hover:bg-indigo-800 transition md:py-3 md:px-8 md:!text-2xl">뒤로</motion.button>
         <div className="flex flex-col items-center"><img src={robotSvg} alt="Robot Logo" className="w-12 h-12 mb-2" /><h2 className="text-lg text-slate-400">방 코드</h2><p className="text-2xl font-bold text-rose-500 tracking-widest">{roomCode}</p></div>
-        <div className="flex justify-end w-24"><VolumeControl /></div>
+        <div className="flex justify-end w-24">
+            {/* 2. VolumeControl에 prop 전달 */}
+            <VolumeControl onOpenDescription={onOpenDescription} /> {/* ⭐ [수정] 전달 */}
+        </div>
       </div>
 
       <div className="flex md:hidden w-full bg-indigo-900/50 rounded-xl p-1 mb-4 flex-shrink-0 sticky top-0 z-10 backdrop-blur-sm">

@@ -61,7 +61,7 @@ const CustomAlert = ({ isOpen, message, type = 'error', onClose }) => {
   );
 };
 
-const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom, onJoinRoom }) => {
+const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom, onJoinRoom, onOpenDescription }) => {
   const [activeTab, setActiveTab] = useState('login'); 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [alertInfo, setAlertInfo] = useState({ isOpen: false, message: '', type: 'error' });
@@ -129,7 +129,7 @@ const LoginView = ({ nickname, setNickname, roomCode, setRoomCode, onCreateRoom,
   return (
     <div className="bg-[#0F172A] min-h-screen flex items-center justify-center p-4 text-[#E2E8F0] relative">
       <div className="absolute top-4 right-4 z-50">
-        <VolumeControl />
+        <VolumeControl onOpenDescription={onOpenDescription} />
       </div>
       <CustomAlert isOpen={alertInfo.isOpen} message={alertInfo.message} type={alertInfo.type} onClose={closeAlert} />
 

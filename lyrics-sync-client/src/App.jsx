@@ -6,6 +6,9 @@ import './global.css';
 // Context
 import { useSound } from './context/SoundContext';
 
+// Components
+import GameDescriptionModal from './components/GameDescriptionModal';
+
 // Views
 import LoginView from './views/LoginView';
 import JoinLinkView from './views/JoinLinkView';
@@ -42,6 +45,7 @@ urgentTimerAudio.preload = 'auto';
 
 function App() {
   const { playSound } = useSound(); // SoundContext 사용
+  const [showDescription, setShowDescription] = useState(false)
 
   const [view, setView] = useState('login'); 
   const [nickname, setNickname] = useState('');
@@ -289,16 +293,21 @@ function App() {
   };
   
   const renderView = () => {
+    const commonProps = {
+      onOpenDescription: () => setShowDescription(true)
+    };
+
     switch(view) {
-      case 'login': return <LoginView nickname={nickname} setNickname={setNickname} roomCode={roomCode} setRoomCode={setRoomCode} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} />;
-      case 'joinLink': return <JoinLinkView nickname={nickname} setNickname={setNickname} roomCode={roomCode} onJoinRoom={handleJoinRoom} onGoBack={handleGoToLogin} />;
+      case 'login': return <LoginView nickname={nickname} setNickname={setNickname} roomCode={roomCode} setRoomCode={setRoomCode} onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} {...commonProps}/>;
+      case 'joinLink': return <JoinLinkView nickname={nickname} setNickname={setNickname} roomCode={roomCode} onJoinRoom={handleJoinRoom} onGoBack={handleGoToLogin} {...commonProps}/>;
       case 'lobby':
         if (!roomState) return <div>로딩 중...</div>;
-        return <LobbyView roomState={roomState} myPlayerId={socket.id} onGoBack={handleGoToLogin} onCopyLink={copyInviteLink} onUpdateSettings={handleUpdateSettings} onSelectTeam={handleSelectTeam} onReady={handlePlayerReady} onStartGame={handleStartGame} allSongCollections={allSongCollections} />;
+        return <LobbyView roomState={roomState} myPlayerId={socket.id} onGoBack={handleGoToLogin} onCopyLink={copyInviteLink} onUpdateSettings={handleUpdateSettings} onSelectTeam={handleSelectTeam} onReady={handlePlayerReady} onStartGame={handleStartGame} allSongCollections={allSongCollections} {...commonProps}/>;
       case 'game':
         if (!roomState) return <div>게임을 불러오는 중...</div>;
         return <GameView roomState={roomState} quizLyrics={quizLyrics} messages={messages} teamScores={teamScores} sortedScoreboard={sortedScoreboard} suggestions={suggestions} currentMessage={currentMessage} onMessageChange={handleMessageChange} onSubmitAnswer={submitAnswer} onGoBack={handleGoToLogin} currentHints={currentHints} answerPopupData={answerPopupData} 
         timerAudio={timerAudio} urgentTimerAudio={urgentTimerAudio} // 타이머 오디오 전달
+        {...commonProps}
         />;
       default: return <h2>알 수 없는 뷰: {view}</h2>;
     }
@@ -307,7 +316,12 @@ function App() {
   return (
     <div className="App w-full min-h-screen text-center">
       {renderView()}
+      {/* ... 최종 점수 팝업 ... */}
       {showFinalScoreboard && <FinalScoreboardPopup data={finalScoreData} onClose={() => setShowFinalScoreboard(false)} />}
+      {/* ⭐ 게임 설명 모달 렌더링 */}
+      {showDescription && (
+        <GameDescriptionModal onClose={() => setShowDescription(false)} />
+      )}
     </div>
   );
 }

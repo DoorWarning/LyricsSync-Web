@@ -31,7 +31,7 @@ function App() {
   // SongForm 데이터
   const [formData, setFormData] = useState({
     title: '', artist: '', original_lyrics: '', translated_lyrics: '', 
-    hint: '', collectionNames: 'kpop-classics',
+    hint: '', collectionNames: '',
   });
 
   // ----------------------------------------------------------------
