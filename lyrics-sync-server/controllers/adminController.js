@@ -1,18 +1,54 @@
 // controllers/adminController.js
 
 const { OAuth2Client } = require('google-auth-library');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Song = require('../models/Song');
 const EditRequest = require('../models/EditRequest');
 const geminiModel = require('../config/gemini');
+const { exec } = require('child_process'); // Webhook용 exec 추가
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // ---------------------------------------------------------
 // 1. 인증 및 미들웨어
 // ---------------------------------------------------------
 
-// 구글 로그인 & 유저 식별 (Upsert)
+// JWT 검증 미들웨어
+exports.checkAuth = async (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: '인증 토큰이 없습니다.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET); 
+    const user = await User.findOne({ email: decoded.email });
+    
+    if (!user) {
+      return res.status(401).json({ success: false, message: '유효하지 않은 사용자입니다.' });
+    }
+    
+    req.user = user;
+    next();
+  } catch (err) {
+    res.status(401).json({ success: false, message: '토큰이 만료되었거나 유효하지 않습니다.' });
+  }
+};
+
+// [미들웨어] 관리자(Admin) 권한 확인
+exports.checkAdmin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ success: false, message: '관리자 권한이 없습니다.' });
+  }
+};
+
+// 구글 로그인 & 유저 식별 (JWT 발급)
 exports.googleLogin = async (req, res) => {
   const { token } = req.body;
   try {
@@ -23,61 +59,26 @@ exports.googleLogin = async (req, res) => {
     const payload = ticket.getPayload();
     const { email, name, picture } = payload;
 
-    // DB에서 유저 찾기, 없으면 생성 (기본 권한: viewer)
     let user = await User.findOne({ email });
     if (!user) {
       user = new User({ email, name, picture, role: 'viewer' });
       await user.save();
     }
 
-    // 클라이언트에 유저 정보와 역할(Role) 반환
+    const jwtToken = jwt.sign(
+        { userId: user._id, email: user.email, role: user.role }, 
+        JWT_SECRET, 
+        { expiresIn: '1h' }
+    );
+
     res.json({ 
       success: true, 
-      user: { 
-        email: user.email, 
-        name: user.name, 
-        picture: user.picture,
-        role: user.role 
-      } 
+      token: jwtToken, 
+      user: { email: user.email, name: user.name, role: user.role } 
     });
 
   } catch (err) {
-    console.error("Google Login Error:", err);
     res.status(401).json({ success: false, message: '인증 실패: ' + err.message });
-  }
-};
-
-// [미들웨어] 로그인된 유저인지 확인
-exports.checkUser = async (req, res, next) => {
-  const userEmail = req.headers['x-user-email']; // 클라이언트가 헤더에 보낸 이메일
-  if (!userEmail) return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
-
-  try {
-    const user = await User.findOne({ email: userEmail });
-    if (!user) return res.status(401).json({ success: false, message: '유효하지 않은 유저입니다.' });
-    
-    req.user = user; // 다음 단계에서 쓸 수 있게 저장
-    next();
-  } catch (err) {
-    res.status(500).json({ success: false, message: '서버 오류' });
-  }
-};
-
-// [미들웨어] 관리자(Admin)인지 확인
-exports.checkAdmin = async (req, res, next) => {
-  const userEmail = req.headers['x-user-email'];
-  if (!userEmail) return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
-
-  try {
-    const user = await User.findOne({ email: userEmail });
-    if (user && user.role === 'admin') {
-      req.user = user;
-      next(); // 통과
-    } else {
-      res.status(403).json({ success: false, message: '관리자 권한이 없습니다.' });
-    }
-  } catch (err) {
-    res.status(500).json({ success: false, message: '서버 오류' });
   }
 };
 
@@ -102,7 +103,22 @@ exports.generateTranslation = async (req, res) => {
   if (!originalLyrics) return res.status(400).json({ success: false, message: '가사 입력 필요' });
 
   try {
-    const prompt = `당신은 "옛날 구글 번역기"입니다... (중략) ... 원본 가사: """${originalLyrics}""" 번역:`;
+    const prompt = `당신은 "옛날 구글 번역기"입니다. 다음 가사를 아래 규칙에 따라 번역하세요.
+    
+    규칙:
+    1. 가사를 옛날 구글번역기의 어색한 번역투로 번역한다.
+    2. 가사에 한국어와 다른 언어가 섞여 있다면 한국어는 영어로 어색하게 번역하고, 다른 언어는 한국어로 어색하게 번역한다.
+    3. 가사가 한국어라면 영어로 어색하게 번역한다.
+    4. 가사가 일본어, 영어 등 한국어가 아닌 언어라면 한국어로 어색하게 번역한다.
+    5. 최종 번역본만 응답으로 제공한다. 다른 설명은 붙이지 않는다.
+    
+    원본 가사:
+    """
+    ${originalLyrics}
+    """
+    
+    번역:`;
+
     const result = await geminiModel.generateContent(prompt);
     const response = await result.response;
     const translatedLyrics = response.text().trim();
@@ -114,17 +130,16 @@ exports.generateTranslation = async (req, res) => {
 
 
 // ---------------------------------------------------------
-// 3. 요청 시스템 (Viewer는 요청만, Admin은 즉시 처리 가능)
+// 3. 요청 시스템 (Viewer는 요청만)
 // ---------------------------------------------------------
 
-// 수정 요청 제출 (Viewer용)
+// 수정 요청 제출
 exports.submitRequest = async (req, res) => {
   try {
-    // requestType: 'create' | 'update' | 'delete'
     const { requestType, targetSongId, data } = req.body;
     const requesterEmail = req.user.email;
 
-    // 배열 데이터 처리 (문자열로 왔을 경우)
+    // 배열 데이터 처리
     if (data && typeof data.collectionNames === 'string') {
       data.collectionNames = data.collectionNames.split(',').map(s => s.trim()).filter(Boolean);
     }
@@ -133,7 +148,7 @@ exports.submitRequest = async (req, res) => {
       requesterEmail,
       requestType,
       targetSongId, // create일 때는 null
-      data,         // delete일 때는 null일 수도 있음
+      data,         // delete일 때는 null
       status: 'pending'
     });
 
@@ -147,15 +162,14 @@ exports.submitRequest = async (req, res) => {
 
 
 // ---------------------------------------------------------
-// 4. 관리자 전용 기능 (Admin Only)
+// 4. 관리자 전용 기능 (Admin Only - 즉시 처리)
 // ---------------------------------------------------------
 
 // 대기 중인 요청 목록 조회
 exports.getPendingRequests = async (req, res) => {
   try {
-    // 최신순 정렬
     const requests = await EditRequest.find({ status: 'pending' })
-      .populate('targetSongId') // 대상 노래 정보도 같이 가져옴 (어떤 노래를 수정하려는지 보기 위해)
+      .populate('targetSongId') 
       .sort({ createdAt: -1 });
     res.json({ success: true, requests });
   } catch (err) {
@@ -185,7 +199,6 @@ exports.approveRequest = async (req, res) => {
       await Song.findByIdAndDelete(request.targetSongId);
     }
 
-    // 요청 상태 업데이트
     request.status = 'approved';
     await request.save();
 
@@ -207,13 +220,43 @@ exports.rejectRequest = async (req, res) => {
   }
 };
 
-// Webhook 핸들러 (기존 유지)
+// Webhook 핸들러
 exports.handleWebhook = (req, res) => {
-  const { exec } = require('child_process');
   console.log('--- GitHub Webhook 수신 ---');
   res.status(200).send('Webhook received.');
   exec('./deploy.sh', { cwd: __dirname + '/../' }, (error, stdout, stderr) => {
     if (error) console.error(`Deployment failed: ${error}`);
     else console.log(`stdout: ${stdout}`);
   });
+};
+
+// [관리자 직접 CRUD]
+exports.createSong = async (req, res) => {
+    try {
+        // 배열 변환 로직 포함
+        const { collectionNames, ...otherData } = req.body;
+        const collectionsArray = typeof collectionNames === 'string' 
+            ? collectionNames.split(',').map(s => s.trim()).filter(Boolean)
+            : collectionNames;
+        
+        const newSong = new Song({ ...otherData, collectionNames: collectionsArray });
+        await newSong.save();
+        res.json({ success: true, song: newSong });
+    } catch(err) { res.status(500).json({message: err.message}); }
+};
+exports.updateSong = async (req, res) => {
+    try {
+        const { collectionNames, ...otherData } = req.body;
+        const collectionsArray = typeof collectionNames === 'string' 
+            ? collectionNames.split(',').map(s => s.trim()).filter(Boolean)
+            : collectionNames;
+        const updatedSong = await Song.findByIdAndUpdate(req.params.id, { ...otherData, collectionNames: collectionsArray }, { new: true });
+        res.json({ success: true, song: updatedSong });
+    } catch(err) { res.status(500).json({message: err.message}); }
+};
+exports.deleteSong = async (req, res) => {
+    try {
+        await Song.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: '삭제됨' });
+    } catch(err) { res.status(500).json({message: err.message}); }
 };
