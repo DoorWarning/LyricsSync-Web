@@ -30,7 +30,9 @@ const SongForm = ({ user, token, editingSong, setEditingSong, refreshSongs, form
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const headers = { 'Authorization': token, 'x-user-email': user.email };
+    
+    // ⭐ [수정] JWT 표준 방식(Bearer)으로 헤더 설정
+    const headers = { 'Authorization': `Bearer ${token}` };
     
     try {
       if (isAdmin) {

@@ -6,41 +6,48 @@ const User = require('../models/User');
 const Song = require('../models/Song');
 const EditRequest = require('../models/EditRequest');
 const geminiModel = require('../config/gemini');
-const { exec } = require('child_process'); // Webhook용 exec 추가
+const { exec } = require('child_process');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // ---------------------------------------------------------
-// 1. 인증 및 미들웨어
+// 1. 인증 및 미들웨어 (검증 완료)
 // ---------------------------------------------------------
 
 // JWT 검증 미들웨어
 exports.checkAuth = async (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ success: false, message: '인증 토큰이 없습니다.' });
-  }
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET); 
-    const user = await User.findOne({ email: decoded.email });
+    // 프론트엔드에서 'Authorization: Bearer <token>' 형태로 보냄
+    const authHeader = req.headers['authorization'];
     
+    // 'Bearer ' 부분을 제외하고 토큰만 추출
+    const token = authHeader && authHeader.split(' ')[1]; 
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: '인증 토큰이 없습니다.' });
+    }
+
+    // 토큰 유효성 검증
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // 유저 정보 조회 (유효한 유저인지 확인)
+    const user = await User.findOne({ email: decoded.email });
     if (!user) {
       return res.status(401).json({ success: false, message: '유효하지 않은 사용자입니다.' });
     }
     
-    req.user = user;
+    req.user = user; // request 객체에 유저 정보 저장
     next();
   } catch (err) {
-    res.status(401).json({ success: false, message: '토큰이 만료되었거나 유효하지 않습니다.' });
+    // 토큰 만료 또는 변조 시
+    return res.status(401).json({ success: false, message: '토큰이 만료되었거나 유효하지 않습니다.' });
   }
 };
 
-// [미들웨어] 관리자(Admin) 권한 확인
+// 관리자(Admin) 권한 확인 미들웨어
 exports.checkAdmin = (req, res, next) => {
+  // checkAuth를 통과했다면 req.user가 존재함
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
@@ -48,10 +55,11 @@ exports.checkAdmin = (req, res, next) => {
   }
 };
 
-// 구글 로그인 & 유저 식별 (JWT 발급)
+// 구글 로그인 및 JWT 발급
 exports.googleLogin = async (req, res) => {
   const { token } = req.body;
   try {
+    // 구글 토큰 검증
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
@@ -59,12 +67,14 @@ exports.googleLogin = async (req, res) => {
     const payload = ticket.getPayload();
     const { email, name, picture } = payload;
 
+    // 유저 조회 또는 생성 (기본 권한: viewer)
     let user = await User.findOne({ email });
     if (!user) {
       user = new User({ email, name, picture, role: 'viewer' });
       await user.save();
     }
 
+    // 우리 서버 전용 JWT 발급 (유효기간 1시간)
     const jwtToken = jwt.sign(
         { userId: user._id, email: user.email, role: user.role }, 
         JWT_SECRET, 
@@ -78,16 +88,16 @@ exports.googleLogin = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("Login Error:", err);
     res.status(401).json({ success: false, message: '인증 실패: ' + err.message });
   }
 };
 
 
 // ---------------------------------------------------------
-// 2. 기본 기능 (누구나 가능 - 로그인 필요)
+// 2. 기본 기능 (로그인 유저 공통)
 // ---------------------------------------------------------
 
-// 노래 목록 조회
 exports.getSongs = async (req, res) => {
   try {
     const songs = await Song.find().sort({ _id: -1 });
@@ -97,26 +107,18 @@ exports.getSongs = async (req, res) => {
   }
 };
 
-// Gemini 번역 생성
 exports.generateTranslation = async (req, res) => {
   const { originalLyrics } = req.body;
   if (!originalLyrics) return res.status(400).json({ success: false, message: '가사 입력 필요' });
 
   try {
     const prompt = `당신은 "옛날 구글 번역기"입니다. 다음 가사를 아래 규칙에 따라 번역하세요.
-    
     규칙:
     1. 가사를 옛날 구글번역기의 어색한 번역투로 번역한다.
-    2. 가사에 한국어와 다른 언어가 섞여 있다면 한국어는 영어로 어색하게 번역하고, 다른 언어는 한국어로 어색하게 번역한다.
-    3. 가사가 한국어라면 영어로 어색하게 번역한다.
-    4. 가사가 일본어, 영어 등 한국어가 아닌 언어라면 한국어로 어색하게 번역한다.
-    5. 최종 번역본만 응답으로 제공한다. 다른 설명은 붙이지 않는다.
-    
-    원본 가사:
-    """
-    ${originalLyrics}
-    """
-    
+    2. 원본 가사가 한국어이면, 영어로 어색하게 번역한다.
+    3. 원본 가사가 영어, 일본어 등 한국어가 아니면, 한국어로 어색하게 번역한다.
+    4. 최종 번역본만 응답으로 제공한다. 다른 설명은 붙이지 않는다.
+    원본 가사: """${originalLyrics}"""
     번역:`;
 
     const result = await geminiModel.generateContent(prompt);
@@ -133,7 +135,6 @@ exports.generateTranslation = async (req, res) => {
 // 3. 요청 시스템 (Viewer는 요청만)
 // ---------------------------------------------------------
 
-// 수정 요청 제출
 exports.submitRequest = async (req, res) => {
   try {
     const { requestType, targetSongId, data } = req.body;
@@ -147,8 +148,8 @@ exports.submitRequest = async (req, res) => {
     const newRequest = new EditRequest({
       requesterEmail,
       requestType,
-      targetSongId, // create일 때는 null
-      data,         // delete일 때는 null
+      targetSongId,
+      data,
       status: 'pending'
     });
 
@@ -162,10 +163,9 @@ exports.submitRequest = async (req, res) => {
 
 
 // ---------------------------------------------------------
-// 4. 관리자 전용 기능 (Admin Only - 즉시 처리)
+// 4. 관리자 전용 기능 (Admin Only)
 // ---------------------------------------------------------
 
-// 대기 중인 요청 목록 조회
 exports.getPendingRequests = async (req, res) => {
   try {
     const requests = await EditRequest.find({ status: 'pending' })
@@ -177,7 +177,6 @@ exports.getPendingRequests = async (req, res) => {
   }
 };
 
-// 요청 승인 (실제 Song DB에 반영)
 exports.approveRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -185,31 +184,27 @@ exports.approveRequest = async (req, res) => {
     if (!request) return res.status(404).json({ success: false, message: '요청을 찾을 수 없습니다.' });
     if (request.status !== 'pending') return res.status(400).json({ success: false, message: '이미 처리된 요청입니다.' });
 
-    // 요청 타입에 따라 DB 조작
     if (request.requestType === 'create') {
       const newSong = new Song(request.data);
       await newSong.save();
     } 
     else if (request.requestType === 'update') {
-      if (!request.targetSongId) return res.status(400).json({ success: false, message: '대상 곡 ID가 없습니다.' });
       await Song.findByIdAndUpdate(request.targetSongId, request.data);
     } 
     else if (request.requestType === 'delete') {
-      if (!request.targetSongId) return res.status(400).json({ success: false, message: '대상 곡 ID가 없습니다.' });
       await Song.findByIdAndDelete(request.targetSongId);
     }
 
     request.status = 'approved';
     await request.save();
 
-    res.json({ success: true, message: '승인 완료. 데이터베이스에 반영되었습니다.' });
+    res.json({ success: true, message: '승인 완료 및 반영됨' });
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// 요청 거절
 exports.rejectRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
@@ -233,7 +228,6 @@ exports.handleWebhook = (req, res) => {
 // [관리자 직접 CRUD]
 exports.createSong = async (req, res) => {
     try {
-        // 배열 변환 로직 포함
         const { collectionNames, ...otherData } = req.body;
         const collectionsArray = typeof collectionNames === 'string' 
             ? collectionNames.split(',').map(s => s.trim()).filter(Boolean)
@@ -244,6 +238,7 @@ exports.createSong = async (req, res) => {
         res.json({ success: true, song: newSong });
     } catch(err) { res.status(500).json({message: err.message}); }
 };
+
 exports.updateSong = async (req, res) => {
     try {
         const { collectionNames, ...otherData } = req.body;
@@ -254,6 +249,7 @@ exports.updateSong = async (req, res) => {
         res.json({ success: true, song: updatedSong });
     } catch(err) { res.status(500).json({message: err.message}); }
 };
+
 exports.deleteSong = async (req, res) => {
     try {
         await Song.findByIdAndDelete(req.params.id);
