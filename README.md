@@ -129,12 +129,16 @@
 * Axios
 * Tailwind CSS
 * Framer Motion
+* `dotenv` (환경 변수 관리)
 
 ### 2. Admin Client
 
 * React
 * Vite
-* `axios`
+* Axios
+* Framer Motion
+* Google-auth-JWT
+* `dotenv` (환경 변수 관리)
 
 ### 3. Server
 
@@ -143,4 +147,5 @@
 * Socket.IO
 * MongoDB (Mongoose)
 * Google Generative AI (Gemini) (Gemini 2.5 Pro)
+* Google-auth-JWT
 * `dotenv` (환경 변수 관리)
