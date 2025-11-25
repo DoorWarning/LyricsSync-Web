@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const QuizMaker = ({ user, token, setFormData, apiUrl }) => {
+const QuizMaker = ({ user, token, setFormData, apiUrl, showAlert }) => {
   const [original, setOriginal] = useState('');
   const [translated, setTranslated] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -19,10 +19,11 @@ const QuizMaker = ({ user, token, setFormData, apiUrl }) => {
         }
       );
       setTranslated(response.data.translatedLyrics);
+      showAlert('번역이 완료되었습니다.', 'success');
     } catch (err) {
       // 에러 메시지 상세 표시
       const msg = err.response?.data?.message || err.message;
-      alert(`번역 실패: ${msg}`);
+      showAlert(`번역 실패: ${msg}`, 'error');
     }
     setIsLoading(false);
   };
