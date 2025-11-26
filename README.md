@@ -199,26 +199,6 @@ MongoDB(Mongoose)를 사용하여 다음과 같은 데이터 모델을 관리합
 | | **Google Gemini API** | AI 번역 가사 생성 |
 | | **Google Auth Library** | OAuth 2.0 인증 및 JWT 발급 |
 | **DevOps** | **Vercel** | 클라이언트(Game, Admin) 배포 |
-| | **MS Azure (VM)** | 서버 배포 (PM2, Nginx, Docker) |
-| | **GitHub Actions** | CI/CD 자동화 (Webhook 활용) |
-
----
-
-## 🛠️ 기술 스택 (Tech Stack)
-
-| 구분 | 기술 | 설명 |
-| :--- | :--- | :--- |
-| **Frontend** | **React, Vite** | 빠른 빌드 및 모던 UI 개발 |
-| | **Tailwind CSS** | 유틸리티 퍼스트 CSS 프레임워크 |
-| | **Framer Motion** | 부드러운 UI 애니메이션 구현 |
-| | **Axios** | REST API 비동기 통신 |
-| | **Socket.IO Client** | 실시간 웹소켓 통신 |
-| **Backend** | **Node.js, Express** | 서버 런타임 및 API 프레임워크 |
-| | **Socket.IO** | 실시간 양방향 통신 |
-| | **MongoDB, Mongoose** | NoSQL 데이터베이스 및 ODM |
-| | **Google Gemini API** | AI 번역 가사 생성 |
-| | **Google Auth Library** | OAuth 2.0 인증 및 JWT 발급 |
-| **DevOps** | **Vercel** | 클라이언트(Game, Admin) 배포 |
 | | **MS Azure (VM)** | 서버 배포 (PM2, Nginx) |
 | | **GitHub Actions** | CI/CD 자동화 (Webhook 활용) |
 
