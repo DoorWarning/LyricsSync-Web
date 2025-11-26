@@ -4,7 +4,7 @@
 
 <h3 align="center">
   <a href="https://lyrics-sync-client.vercel.app/">
-    🚀 <strong>게임 플레이하러 가기 (Live Demo)</strong>
+    🚀 <strong>게임 플레이하러 가기</strong>
   </a>
 </h3>
 
@@ -22,11 +22,42 @@
 
 ## 📸 게임 스크린샷 (Screenshots)
 
-| 메인 화면 | 로비 화면 |
-| :---: | :---: |
-| <img src="PRD/Screenshoot/MainMobile.png" height="400"/> | <img src="PRD/Screenshoot/LobbyMobile.png" height="400"/> |
-| **게임 진행** | **정답/결과** |
-| <img src="PRD/Screenshoot/GameMobile.png" height="400"/> | <img src="PRD/Screenshoot/PopupMobile.png" height="400"/> |
+<table>
+  <thead>
+    <tr>
+      <th width="15%" align="center">화면 (Screen)</th>
+      <th width="55%" align="center">Desktop</th>
+      <th width="30%" align="center">Mobile</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>메인 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/MainDesktop.png" height="250px" alt="Main Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/MainMobile.png" height="250px" alt="Main Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>로비 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/LobbyDesktop.png" height="250px" alt="Lobby Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/LobbyMobile.png" height="250px" alt="Lobby Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>게임 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/GameDesktop.png" height="250px" alt="Game Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/GameMobile.png" height="250px" alt="Game Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>정답 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/PopupDesktop.png" height="250px" alt="Popup Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/PopupMobile.png" height="250px" alt="Popup Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>순위 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/RankDesktop.png" height="250px" alt="Rank Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/RankMobile.png" height="250px" alt="Rank Mobile"></td>
+    </tr>
+  </tbody>
+</table>
 
 > *데스크톱 및 모바일 환경을 모두 지원하는 반응형 디자인(Responsive Design)이 적용되었습니다.*
 
