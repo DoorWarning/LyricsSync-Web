@@ -4,148 +4,224 @@
 
 <h3 align="center">
   <a href="https://lyrics-sync-client.vercel.app/">
-    🚀 게임 플레이하러 가기
+    🚀 <strong>게임 플레이하러 가기 (Live Demo)</strong>
   </a>
 </h3>
 
-# LyricsSync (엉뚱한 가사 퀴즈)
+<p align="center">
+  <strong>AI가 번역한 엉뚱한 가사를 보고 원곡을 맞히는 실시간 멀티플레이 퀴즈 게임</strong><br/>
+  친구들과 링크 하나로 간편하게 즐기는 웹 기반 파티 게임입니다.
+</p>
 
-`LyricsSync`는 엉뚱하게 번역된 노래 가사를 보고 원곡을 맞히는 실시간 멀티플레이 퀴즈 게임입니다. 이 레포지토리는 게임 클라이언트, 게임 서버, 관리자 대시보드를 모두 포함하는 모노레포(monorepo)입니다.
-
-이 프로젝트는 React, Node.js, Socket.IO, MongoDB를 기반으로 구축되었습니다.
-
-### 📄 프로젝트 기획 문서
-
-* [**프로젝트 기획서 (PRD) 바로가기](./PRD/prd.pdf)**
-* [**원페이저 (One-Pager) 바로가기](./PRD/onepager.pdf)**
-
-
-### 📸 LyricsSync 게임 스크린샷
-
-<table>
-  <thead>
-    <tr>
-      <th width="15%" align="center">화면 (Screen)</th>
-      <th width="55%" align="center">Desktop</th>
-      <th width="30%" align="center">Mobile</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><b>메인 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/MainDesktop.png" height="250px" alt="Main Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/MainMobile.png" height="250px" alt="Main Mobile"></td>
-    </tr>
-    <tr>
-      <td align="center"><b>로비 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/LobbyDesktop.png" height="250px" alt="Lobby Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/LobbyMobile.png" height="250px" alt="Lobby Mobile"></td>
-    </tr>
-    <tr>
-      <td align="center"><b>게임 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/GameDesktop.png" height="250px" alt="Game Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/GameMobile.png" height="250px" alt="Game Mobile"></td>
-    </tr>
-    <tr>
-      <td align="center"><b>정답 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/PopupDesktop.png" height="250px" alt="Popup Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/PopupMobile.png" height="250px" alt="Popup Mobile"></td>
-    </tr>
-    <tr>
-      <td align="center"><b>순위 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/RankDesktop.png" height="250px" alt="Rank Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/RankMobile.png" height="250px" alt="Rank Mobile"></td>
-    </tr>
-  </tbody>
-</table>
+<div align="center">
+  <a href="./PRD/prd.pdf">📄 프로젝트 기획서 (PRD)</a> | 
+  <a href="./PRD/onepager.pdf">📑 원페이저 (One-Pager)</a>
+</div>
 
 ---
 
-## 🌎 프로젝트 구조
+## 📸 게임 스크린샷 (Screenshots)
 
-이 레포지토리는 3개의 개별 프로젝트로 구성되어 있습니다.
+| 메인 화면 | 로비 화면 |
+| :---: | :---: |
+| <img src="PRD/Screenshoot/MainMobile.png" height="400"/> | <img src="PRD/Screenshoot/LobbyMobile.png" height="400"/> |
+| **게임 진행** | **정답/결과** |
+| <img src="PRD/Screenshoot/GameMobile.png" height="400"/> | <img src="PRD/Screenshoot/PopupMobile.png" height="400"/> |
 
-1.  **`lyrics-sync-client/`**: 유저들이 실제 게임을 플레이하는 React 클라이언트 (Vite)
-2.  **`lyrics-sync-server/`**: 게임 로직, API, DB를 총괄하는 Node.js 통합 서버 (Express + Socket.IO)
-3.  **`lyrics-sync-admin-client/`**: 관리자가 DB의 퀴즈를 관리하는 React 어드민 패널 (Vite)
+> *데스크톱 및 모바일 환경을 모두 지원하는 반응형 디자인(Responsive Design)이 적용되었습니다.*
 
 ---
 
-## ✨ 주요 기능
+## 🌎 프로젝트 구조 (Monorepo)
+
+이 레포지토리는 3개의 개별 프로젝트로 구성된 모노레포입니다.
+
+1.  **`lyrics-sync-client/`**: 유저들이 게임을 플레이하는 **React 클라이언트**
+2.  **`lyrics-sync-server/`**: 게임 로직, DB, API를 담당하는 **Node.js 통합 서버**
+3.  **`lyrics-sync-admin-client/`**: 퀴즈 데이터와 요청을 관리하는 **관리자 대시보드**
+
+---
+
+## ✨ 주요 기능 (Key Features)
 
 ### 🎵 게임 클라이언트 (`lyrics-sync-client`)
 
-*   **실시간 멀티플레이:** Socket.IO를 사용한 실시간 통신으로 여러 플레이어가 함께 게임을 즐길 수 있습니다.
-*   **방 시스템:** 고유한 코드로 생성된 비공개 방을 통해 친구들과 플레이할 수 있습니다.
-*   **개인전 & 팀전:** 점수를 합산하는 팀전 모드를 지원합니다.
-*   **AI 기반 퀴즈 생성:** Google Gemini AI를 통해 원본 가사를 '구글 번역기' 스타일의 어색한 번역체로 자동 변환하여 퀴즈를 생성합니다.
-*   **다양한 힌트:** 정답을 유추하기 어려울 경우, 초성 힌트와 가수 힌트가 단계적으로 제공됩니다.
-*   **동적 점수 시스템:** 정답을 맞힌 시간에 따라 차등적으로 점수를 획득합니다.
-*   **반응형 UI:** 데스크톱과 모바일 환경을 모두 지원하는 반응형 UI/UX를 제공합니다.
-*   **사운드 효과:** UI 상호작용 및 게임 이벤트에 사운드 효과를 적용하여 몰입감을 높였습니다.
-*   **관리자 페이지:** 관리자는 별도의 페이지에서 노래를 추가, 수정, 삭제하고 AI를 통해 번역 가사를 생성하는 등 게임 콘텐츠를 쉽게 관리할 수 있습니다.
-
-### ⚙️ 통합 서버 (`lyrics-sync-server`)
-
-* **MVCS (Model-View-Controller-Service) 패턴:** 유지보수와 확장성을 위해 코드를 역할별로 분리했습니다.
-    * **Model (`models/Song.js`):** Mongoose를 사용해 MongoDB의 `Song` 스키마(데이터 구조)를 정의합니다.
-    * **View:** 서버는 API(JSON)만 제공하므로, `lyrics-sync-client`가 View 역할을 수행합니다.
-    * **Controller (`routes/` & `sockets/`):**
-        * `routes/adminRoutes.js`: 관리자용 REST API 엔드포인트(주소)를 정의합니다.
-        * `sockets/socketHandler.js`: Socket.IO의 실시간 이벤트(`on('joinRoom')` 등)를 수신하고 처리합니다.
-    * **Service (`controllers/`):**
-        * `controllers/adminController.js`: API 요청에 대한 실제 비즈니스 로직(로그인, CRUD)을 수행합니다.
-        * `controllers/gameLogic.js`: `rooms` 객체(방 상태)를 관리하고, `startNewRound` 같은 핵심 게임 규칙을 처리하는 서비스 계층입니다.
-* **Socket.IO:** 실시간 게임 상태 동기화, 채팅, 정답 판정 등 핵심 게임 로직을 처리합니다.
-* **REST API (Express):** 관리자 인증(임시 토큰) 및 DB 관리를 위한 CRUD API를 제공합니다.
-* **MongoDB (Mongoose):**
-    * `Song` 모델 관리 (한 곡이 여러 모음집에 속할 수 있는 `collectionNames: [String]` 배열 구조)
-    * `aggregate`를 이용해 선택된 모음집에서 랜덤 퀴즈를 효율적으로 추출합니다.
-* **Gemini API:**
-    * `gemini-2.5-pro` 모델을 연동합니다.
-    * "옛날 구글 번역기" 스타일의 엉뚱한 번역 생성 API (`/api/admin/generate-translation`)를 제공합니다.
+* **실시간 멀티플레이:** `Socket.IO`를 이용해 지연 없는 퀴즈 진행 및 채팅을 지원합니다.
+* **접근성:** 별도의 설치나 회원가입 없이 **URL 링크 공유**만으로 즉시 방에 입장할 수 있습니다.
+* **게임 모드:**
+    * **개인전:** 개인별 점수 경쟁 및 순위 산정.
+    * **팀전 (A/B팀):** 팀원 점수 합산 경쟁 모드 지원.
+* **AI 퀴즈 콘텐츠:** Google Gemini Pro가 생성한 '번역기투'의 엉뚱한 가사 퀴즈 제공.
+* **인게임 시스템:**
+    * **동적 점수:** 30초(30점) → 45초(20점/초성힌트) → 60초(10점/가수힌트) 단계별 차등 점수 지급.
+    * **자동완성:** DB에 등록된 노래 제목 자동완성으로 입력 편의성 제공.
+    * **아바타:** 15종의 로봇 아바타 랜덤 배정.
+    * **사운드 & 모션:** `Framer Motion` 애니메이션과 상황별 효과음(정답, 오답, 타이머 등) 적용.
 
 ### 🛠️ 관리자 대시보드 (`lyrics-sync-admin-client`)
 
-* **관리자 인증:** 서버 `.env` 파일의 비밀번호로 로그인합니다.
-* **노래 DB 관리 (CRUD):**
-    * **Create:** 새 노래 추가 (제목, 가수, 힌트, 원본/번역 가사, 모음집)
-    * **Read:** 모음집별로 그룹화된 전체 노래 목록 (클릭 시 펼쳐지는 아코디언 UI)
-    * **Update:** 기존 노래의 모든 정보 수정
-    * **Delete:** 노래 삭제
-* **퀴즈 생성 도우미:**
-    * 원본 가사를 입력하면 Gemini API가 "엉뚱한 번역" 가사를 생성합니다.
-    * 생성된 가사를 '새 노래 추가' 폼으로 바로 전송합니다.
+* **Google OAuth 인증:** 보안을 위해 구글 로그인을 사용합니다.
+* **RBAC (역할 기반 접근 제어):**
+    * **Admin (관리자):** 노래 추가/수정/삭제 즉시 반영, 유저 요청 승인/거절 권한.
+    * **Viewer (일반 유저):** 데이터 조회 가능, 수정/삭제는 '요청(Request)'만 가능.
+* **요청 승인 시스템:** 일반 유저가 보낸 변경 요청을 관리자가 검토 후 DB에 반영하는 워크플로우.
+* **AI 도구:** 가사 원본을 입력하면 Gemini가 즉시 퀴즈용 번역 가사를 생성해주는 도구 내장.
+
+### ⚙️ 통합 서버 (`lyrics-sync-server`)
+
+* **MVCS 아키텍처:** 유지보수를 위해 `Model`, `View(JSON)`, `Controller`, `Service` 계층으로 코드 분리.
+* **Socket.IO 로직:** 방 생성, 유저 입장/퇴장, 게임 루프, 타이머 동기화 등 핵심 로직 처리.
+* **REST API:** 관리자 페이지 및 게임 초기 데이터(곡 모음집 등) 제공.
+* **MongoDB (Mongoose):**
+    * `Song`: 노래 데이터 (한 곡이 여러 모음집에 속하는 배열 구조).
+    * `User`: 관리자 정보 및 권한 관리.
+    * `EditRequest`: 수정 요청 대기열 관리.
+* **자동 배포 (CI/CD):** GitHub Webhook을 통해 `main` 브랜치 푸시 시 서버 자동 업데이트 및 재시작.
 
 ---
 
-## 🛠️ 기술 스택
+## 💾 데이터베이스 스키마 (MongoDB)
 
-### 1. Game Client
+MongoDB(Mongoose)를 사용하여 다음과 같은 데이터 모델을 관리합니다.
 
-* React
-* Vite
-* Socket.IO Client
-* Axios
-* Tailwind CSS
-* Framer Motion
-* `dotenv` (환경 변수 관리)
+### 1. Song (노래 데이터)
+실제 게임에서 출제되는 퀴즈 데이터입니다.
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `title` | String | 노래 제목 (정답) |
+| `artist` | String | 가수 이름 (힌트 제공용) |
+| `original_lyrics` | String | 원본 가사 |
+| `translated_lyrics` | String | Gemini가 생성한 엉뚱한 번역 가사 (퀴즈 문제) |
+| `hint` | String | 초성 힌트 |
+| `collectionNames` | [String] | 노래가 속한 모음집 태그 배열 (예: `["kpop-2023", "ballad"]`) |
 
-### 2. Admin Client
+### 2. User (관리자 유저)
+관리자 페이지 접속 유저 및 권한 정보입니다.
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `email` | String | 구글 이메일 (고유값) |
+| `name` | String | 유저 이름 |
+| `role` | String | 권한 등급 (`'admin'` 또는 `'viewer'`) |
+| `createdAt` | Date | 가입일 |
 
-* React
-* Vite
-* Axios
-* Framer Motion
-* Google-auth-JWT
-* `dotenv` (환경 변수 관리)
+### 3. EditRequest (수정 요청)
+일반 유저(Viewer)가 보낸 변경 요청 대기열입니다.
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `requesterEmail` | String | 요청자 이메일 |
+| `requestType` | String | 요청 종류 (`'create'`, `'update'`, `'delete'`) |
+| `targetSongId` | ObjectId | 수정/삭제 대상 노래 ID (Optional) |
+| `data` | Object | 변경하려는 노래 데이터 (JSON) |
+| `status` | String | 처리 상태 (`'pending'`, `'approved'`, `'rejected'`) |
 
-### 3. Server
+---
 
-* Node.js
-* Express.js
-* Socket.IO
-* MongoDB (Mongoose)
-* Google Generative AI (Gemini) (Gemini 2.5 Pro)
-* Google-auth-JWT
-* `dotenv` (환경 변수 관리)
+## 📡 API & Socket Events
+
+### 1. REST API Endpoints
+서버는 Express.js를 통해 다음 API를 제공합니다.
+
+#### Public API
+* **`GET /api/public/collections`**: DB에 존재하는 모든 곡 모음집(태그) 목록을 반환합니다. (게임 로비 설정용)
+
+#### Admin API (Google Login & JWT 인증 필요)
+* **`POST /api/admin/google-login`**: 구글 인증 토큰을 검증하고 서버 전용 JWT를 발급합니다.
+* **`GET /api/admin/songs`**: 전체 노래 목록을 조회합니다.
+* **`POST /api/admin/generate-translation`**: Gemini AI를 호출하여 가사를 번역합니다.
+* **`POST /api/admin/request`**: (Viewer용) 노래 추가/수정/삭제 요청을 제출합니다.
+* **`GET /api/admin/requests`** (Admin Only): 대기 중인 수정 요청 목록을 조회합니다.
+* **`POST /api/admin/requests/:id/approve`** (Admin Only): 요청을 승인하고 실제 DB(`Song`)에 반영합니다.
+* **`POST /api/admin/requests/:id/reject`** (Admin Only): 요청을 거절합니다.
+* **`POST/PUT/DELETE /api/admin/songs`** (Admin Only): 노래 데이터를 직접 조작합니다.
+
+### 2. Socket.IO Events
+실시간 게임 진행을 위한 웹소켓 이벤트 구조입니다.
+
+| Direction | Event Name | Description |
+| :--- | :--- | :--- |
+| **Client → Server** | `createRoom` | 방장이 새로운 방을 생성합니다. |
+| | `joinRoom` | 플레이어가 방 코드를 입력하여 입장합니다. |
+| | `updateSettings` | 방장이 게임 설정(라운드, 모음집 등)을 변경합니다. |
+| | `playerReady` | 플레이어가 준비 상태를 토글합니다. |
+| | `startGame` | 방장이 게임을 시작합니다. |
+| | `submitAnswer` | 플레이어가 정답을 제출합니다. |
+| **Server → Client** | `updateLobby` | 대기실 상태(참가자, 설정)가 변경될 때 브로드캐스트합니다. |
+| | `newQuiz` | 새 라운드 문제(가사)와 타이머 정보를 전송합니다. |
+| | `showHint` | 특정 시간 경과 시 힌트(초성/가수)를 전송합니다. |
+| | `correctAnswer` | 정답자가 발생했을 때 알림 및 점수를 갱신합니다. |
+| | `gameOver` | 게임 종료 시 최종 결과를 전송합니다. |
+
+---
+
+## 🛠️ 기술 스택 (Tech Stack)
+
+| 구분 | 기술 | 설명 |
+| :--- | :--- | :--- |
+| **Frontend** | **React, Vite** | 빠른 빌드 및 모던 UI 개발 |
+| | **Tailwind CSS** | 유틸리티 퍼스트 CSS 프레임워크 |
+| | **Framer Motion** | 부드러운 UI 애니메이션 구현 |
+| | **Axios** | REST API 비동기 통신 |
+| | **Socket.IO Client** | 실시간 웹소켓 통신 |
+| **Backend** | **Node.js, Express** | 서버 런타임 및 API 프레임워크 |
+| | **Socket.IO** | 실시간 양방향 통신 |
+| | **MongoDB, Mongoose** | NoSQL 데이터베이스 및 ODM |
+| | **Google Gemini API** | AI 번역 가사 생성 |
+| | **Google Auth Library** | OAuth 2.0 인증 및 JWT 발급 |
+| **DevOps** | **Vercel** | 클라이언트(Game, Admin) 배포 |
+| | **MS Azure (VM)** | 서버 배포 (PM2, Nginx, Docker) |
+| | **GitHub Actions** | CI/CD 자동화 (Webhook 활용) |
+
+---
+
+## 🛠️ 기술 스택 (Tech Stack)
+
+| 구분 | 기술 | 설명 |
+| :--- | :--- | :--- |
+| **Frontend** | **React, Vite** | 빠른 빌드 및 모던 UI 개발 |
+| | **Tailwind CSS** | 유틸리티 퍼스트 CSS 프레임워크 |
+| | **Framer Motion** | 부드러운 UI 애니메이션 구현 |
+| | **Axios** | REST API 비동기 통신 |
+| | **Socket.IO Client** | 실시간 웹소켓 통신 |
+| **Backend** | **Node.js, Express** | 서버 런타임 및 API 프레임워크 |
+| | **Socket.IO** | 실시간 양방향 통신 |
+| | **MongoDB, Mongoose** | NoSQL 데이터베이스 및 ODM |
+| | **Google Gemini API** | AI 번역 가사 생성 |
+| | **Google Auth Library** | OAuth 2.0 인증 및 JWT 발급 |
+| **DevOps** | **Vercel** | 클라이언트(Game, Admin) 배포 |
+| | **MS Azure (VM)** | 서버 배포 (PM2, Nginx) |
+| | **GitHub Actions** | CI/CD 자동화 (Webhook 활용) |
+
+---
+
+## 🚀 설치 및 실행 가이드 (Local)
+
+이 프로젝트는 3개의 터미널에서 각각 실행해야 합니다.
+
+### 1. 환경 변수 설정 (.env)
+
+각 폴더(`server`, `client`, `admin`) 루트에 `.env` 파일을 생성하고 필요한 키를 입력하세요.
+* **Server:** `MONGO_URI`, `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, `JWT_SECRET`
+* **Game Clients:** `VITE_SERVER_URL` (로컬: `http://localhost:3001`), `VITE_ADMIN_URL`
+* **Admin Clients:** `VITE_SERVER_URL` (로컬: `http://localhost:3001`), `VITE_GOOGLE_CLIENT_ID`
+
+### 2. 서버 실행
+```bash
+cd lyrics-sync-server
+npm install
+node index.js
+```
+
+### 3. 게임 클라이언트 실행
+```bash
+cd lyrics-sync-client
+npm install
+npm run dev
+```
+
+### 4. 관리자 클라이언트 실행
+```bash
+cd lyrics-sync-admin-client
+npm install
+npm run dev
+```
+<div align="center"> © 2025 LyricsSync. All Rights Reserved. </div>
