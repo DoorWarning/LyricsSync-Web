@@ -199,7 +199,8 @@ MongoDB(Mongoose)를 사용하여 다음과 같은 데이터 모델을 관리합
 | | **Google Gemini API** | AI 번역 가사 생성 |
 | | **Google Auth Library** | OAuth 2.0 인증 및 JWT 발급 |
 | **DevOps** | **Vercel** | 클라이언트(Game, Admin) 배포 |
-| | **MS Azure (VM)** | 서버 배포 (PM2, Nginx) |
+| | **MS Azure (VM)** | 서버 배포 (PM2, Nginx, CertBot) |
+| | **Duck DNS (DNS)** | 무료 DNS |
 | | **GitHub Actions** | CI/CD 자동화 (Webhook 활용) |
 
 ---
