@@ -4,7 +4,7 @@
 
 <h3 align="center">
   <a href="https://lyrics-sync-client.vercel.app/">
-    🚀 <strong>게임 플레이하러 가기</strong>
+    🚀 <strong>게임 플레이하러 가기 (Live Demo)</strong>
   </a>
 </h3>
 
@@ -16,49 +16,17 @@
 <div align="center">
   <a href="./PRD/prd.pdf">📄 프로젝트 기획서 (PRD)</a> | 
   <a href="./PRD/onepager.pdf">📑 원페이저 (One-Pager)</a>
-  <a href="./PRD/initialdesign.pdf">📑 디자인 계획서 (Initial-Design)</a>
 </div>
 
 ---
 
 ## 📸 게임 스크린샷 (Screenshots)
 
-<table>
-  <thead>
-    <tr>
-      <th width="15%" align="center">화면 (Screen)</th>
-      <th width="55%" align="center">Desktop</th>
-      <th width="30%" align="center">Mobile</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><b>메인 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/MainDesktop.png" height="250px" alt="Main Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/MainMobile.png" height="250px" alt="Main Mobile"></td>
-    </tr>
-    <tr>
-      <td align="center"><b>로비 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/LobbyDesktop.png" height="250px" alt="Lobby Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/LobbyMobile.png" height="250px" alt="Lobby Mobile"></td>
-    </tr>
-    <tr>
-      <td align="center"><b>게임 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/GameDesktop.png" height="250px" alt="Game Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/GameMobile.png" height="250px" alt="Game Mobile"></td>
-    </tr>
-    <tr>
-      <td align="center"><b>정답 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/PopupDesktop.png" height="250px" alt="Popup Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/PopupMobile.png" height="250px" alt="Popup Mobile"></td>
-    </tr>
-    <tr>
-      <td align="center"><b>순위 화면</b></td>
-      <td align="center"><img src="PRD/Screenshoot/RankDesktop.png" height="250px" alt="Rank Desktop"></td>
-      <td align="center"><img src="PRD/Screenshoot/RankMobile.png" height="250px" alt="Rank Mobile"></td>
-    </tr>
-  </tbody>
-</table>
+| 메인 화면 | 로비 화면 |
+| :---: | :---: |
+| <img src="PRD/Screenshoot/MainMobile.png" height="400"/> | <img src="PRD/Screenshoot/LobbyMobile.png" height="400"/> |
+| **게임 진행** | **정답/결과** |
+| <img src="PRD/Screenshoot/GameMobile.png" height="400"/> | <img src="PRD/Screenshoot/PopupMobile.png" height="400"/> |
 
 > *데스크톱 및 모바일 환경을 모두 지원하는 반응형 디자인(Responsive Design)이 적용되었습니다.*
 
@@ -104,10 +72,6 @@
 * **MVCS 아키텍처:** 유지보수를 위해 `Model`, `View(JSON)`, `Controller`, `Service` 계층으로 코드 분리.
 * **Socket.IO 로직:** 방 생성, 유저 입장/퇴장, 게임 루프, 타이머 동기화 등 핵심 로직 처리.
 * **REST API:** 관리자 페이지 및 게임 초기 데이터(곡 모음집 등) 제공.
-* **MongoDB (Mongoose):**
-    * `Song`: 노래 데이터 (한 곡이 여러 모음집에 속하는 배열 구조).
-    * `User`: 관리자 정보 및 권한 관리.
-    * `EditRequest`: 수정 요청 대기열 관리.
 * **자동 배포 (CI/CD):** GitHub Webhook을 통해 `main` 브랜치 푸시 시 서버 자동 업데이트 및 재시작.
 
 ---
@@ -159,7 +123,7 @@ MongoDB(Mongoose)를 사용하여 다음과 같은 데이터 모델을 관리합
 #### Admin API (Google Login & JWT 인증 필요)
 * **`POST /api/admin/google-login`**: 구글 인증 토큰을 검증하고 서버 전용 JWT를 발급합니다.
 * **`GET /api/admin/songs`**: 전체 노래 목록을 조회합니다.
-* **`POST /api/admin/generate-translation`**: Gemini AI를 호출하여 가사를 번역합니다.
+* **`POST /api/admin/generate-translation`**: Gemini CLI를 호출하여 가사를 번역합니다.
 * **`POST /api/admin/request`**: (Viewer용) 노래 추가/수정/삭제 요청을 제출합니다.
 * **`GET /api/admin/requests`** (Admin Only): 대기 중인 수정 요청 목록을 조회합니다.
 * **`POST /api/admin/requests/:id/approve`** (Admin Only): 요청을 승인하고 실제 DB(`Song`)에 반영합니다.
@@ -197,10 +161,10 @@ MongoDB(Mongoose)를 사용하여 다음과 같은 데이터 모델을 관리합
 | **Backend** | **Node.js, Express** | 서버 런타임 및 API 프레임워크 |
 | | **Socket.IO** | 실시간 양방향 통신 |
 | | **MongoDB, Mongoose** | NoSQL 데이터베이스 및 ODM |
-| | **Google Gemini API** | AI 번역 가사 생성 |
+| | **Gemini CLI** | AI 번역 가사 생성 (CLI 기반, Gemini 2.5 Pro) |
 | | **Google Auth Library** | OAuth 2.0 인증 및 JWT 발급 |
 | **DevOps** | **Vercel** | 클라이언트(Game, Admin) 배포 |
-| | **MS Azure (VM)** | 서버 배포 (PM2, Nginx, CertBot) |
+| | **MS Azure (VM)** | 서버 배포 (PM2, Nginx, Docker) |
 | | **Duck DNS (DNS)** | 무료 DNS |
 | | **GitHub Actions** | CI/CD 자동화 (Webhook 활용) |
 
@@ -218,23 +182,31 @@ MongoDB(Mongoose)를 사용하여 다음과 같은 데이터 모델을 관리합
 * **Admin Clients:** `VITE_SERVER_URL` (로컬: `http://localhost:3001`), `VITE_GOOGLE_CLIENT_ID`
 
 ### 2. 서버 실행
+서버 실행 전 **Gemini CLI** 설치가 필요합니다.
 ```bash
+# 1. Gemini CLI 전역 설치
+npm install -g @google/gemini-cli
+
+# 2. Gemini 로그인 (최초 1회)
+# 브라우저 인증이 필요하므로 로컬/VM 환경에 맞게 진행하세요.
+gemini login
+
+# 3. 서버 실행
 cd lyrics-sync-server
 npm install
 node index.js
 ```
 
-### 3. 게임 클라이언트 실행
+3. 게임 클라이언트 실행
 ```bash
 cd lyrics-sync-client
 npm install
 npm run dev
 ```
-
-### 4. 관리자 클라이언트 실행
+4. 관리자 클라이언트 실행
 ```bash
 cd lyrics-sync-admin-client
 npm install
 npm run dev
 ```
-<div align="center"> © 2025 LyricsSync. All Rights Reserved. </div>
+<div align="center"> © 2024 LyricsSync Team. All Rights Reserved. </div  v>
