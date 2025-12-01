@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 import './global.css'; 
+import { AnimatePresence } from 'framer-motion';
 
 // Context
 import { useSound } from './context/SoundContext';
@@ -319,9 +320,12 @@ function App() {
       {/* ... 최종 점수 팝업 ... */}
       {showFinalScoreboard && <FinalScoreboardPopup data={finalScoreData} onClose={() => setShowFinalScoreboard(false)} />}
       {/* ⭐ 게임 설명 모달 렌더링 */}
-      {showDescription && (
-        <GameDescriptionModal onClose={() => setShowDescription(false)} />
-      )}
+      {/* ⭐ [수정] 애니메이션 적용을 위해 AnimatePresence로 감쌉니다. */}
+      <AnimatePresence>
+        {showDescription && (
+          <GameDescriptionModal onClose={() => setShowDescription(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
