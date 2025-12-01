@@ -16,6 +16,7 @@
 <div align="center">
   <a href="./PRD/prd.pdf">📄 프로젝트 기획서 (PRD)</a> | 
   <a href="./PRD/onepager.pdf">📑 원페이저 (One-Pager)</a>
+  <a href="./PRD/initialdesign.pdf">📑 디자인 계획서 (Initial-Design)</a>
 </div>
 
 ---
