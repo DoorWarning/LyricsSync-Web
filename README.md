@@ -4,7 +4,7 @@
 
 <h3 align="center">
   <a href="https://lyrics-sync-client.vercel.app/">
-    🚀 <strong>게임 플레이하러 가기 (Live Demo)</strong>
+    🚀 <strong>게임 플레이하러 가기</strong>
   </a>
 </h3>
 
