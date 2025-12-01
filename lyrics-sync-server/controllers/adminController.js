@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Song = require('../models/Song');
 const EditRequest = require('../models/EditRequest');
-const geminiModel = require('../config/gemini');
+// const geminiModel = require('../config/gemini');
 const { exec } = require('child_process');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -107,29 +107,80 @@ exports.getSongs = async (req, res) => {
   }
 };
 
+// Gemini API 사용 버전
+// exports.generateTranslation = async (req, res) => {
+//   const { originalLyrics } = req.body;
+//   if (!originalLyrics) return res.status(400).json({ success: false, message: '가사 입력 필요' });
+
+//   try {
+//     const prompt = `당신은 "옛날 구글 번역기"입니다. 다음 가사를 아래 규칙에 따라 번역하세요.
+//     규칙:
+//     1. 가사를 옛날 구글번역기의 어색한 번역투로 번역한다.
+//     2. 원본 가사가 한국어이면, 영어로 어색하게 번역한다.
+//     3. 원본 가사가 영어, 일본어 등 한국어가 아니면, 한국어로 어색하게 번역한다.
+//     4. 최종 번역본만 응답으로 제공한다. 다른 설명은 붙이지 않는다.
+//     원본 가사: """${originalLyrics}"""
+//     번역:`;
+
+//     const result = await geminiModel.generateContent(prompt);
+//     const response = await result.response;
+//     const translatedLyrics = response.text().trim();
+//     res.json({ success: true, translatedLyrics });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: 'Gemini 오류: ' + err.message });
+//   }
+// };
+
+// ⭐ [수정] Gemini 번역 생성 (CLI 사용 버전)
 exports.generateTranslation = async (req, res) => {
   const { originalLyrics } = req.body;
   if (!originalLyrics) return res.status(400).json({ success: false, message: '가사 입력 필요' });
 
   try {
-    const prompt = `당신은 "옛날 구글 번역기"입니다. 다음 가사를 아래 규칙에 따라 번역하세요.
-    규칙:
+    // 1. 프롬프트 구성 (줄바꿈 문자 등을 안전하게 처리해야 함)
+    // CLI에 전달할 텍스트이므로 특수문자 처리가 중요합니다.
+    const rules = `
     1. 가사를 옛날 구글번역기의 어색한 번역투로 번역한다.
     2. 원본 가사가 한국어이면, 영어로 어색하게 번역한다.
     3. 원본 가사가 영어, 일본어 등 한국어가 아니면, 한국어로 어색하게 번역한다.
     4. 최종 번역본만 응답으로 제공한다. 다른 설명은 붙이지 않는다.
-    원본 가사: """${originalLyrics}"""
-    번역:`;
+    `;
+    
+    // 2. 실행할 명령어 만들기
+    // 주의: VM에 설치된 명령어 이름이 'gemini'가 아니라면 수정해야 합니다. (예: gemini-chat-cli)
+    // 따옴표(")가 꼬이지 않도록 프롬프트를 한 줄로 만들거나 조심해야 합니다.
+    const promptText = `당신은 옛날 구글 번역기입니다. 다음 규칙에 따라 번역하세요: ${rules} \n\n 원본 가사: ${originalLyrics}`;
+    
+    // 쉘에서 안전하게 실행하기 위해 JSON.stringify로 감싸서 이스케이프 처리
+    const safePrompt = JSON.stringify(promptText);
+    
+    // ⭐ [핵심] CLI 실행 명령어 (본인의 CLI 사용법에 맞게 수정 필요)
+    // 예: gemini "프롬프트 내용"
+    const command = `gemini ${safePrompt}`; 
 
-    const result = await geminiModel.generateContent(prompt);
-    const response = await result.response;
-    const translatedLyrics = response.text().trim();
+    console.log("CLI 명령 실행 중:", command.substring(0, 50) + "...");
+
+    // 3. 명령어 실행 (비동기 처리를 위해 Promise로 감쌈)
+    const runCli = () => new Promise((resolve, reject) => {
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          reject(stderr || error.message);
+        } else {
+          resolve(stdout.trim());
+        }
+      });
+    });
+
+    const translatedLyrics = await runCli();
+    
+    // 4. 결과 반환
     res.json({ success: true, translatedLyrics });
+
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Gemini 오류: ' + err.message });
+    console.error('CLI Error:', err);
+    res.status(500).json({ success: false, message: '번역 생성 실패: ' + err });
   }
 };
-
 
 // ---------------------------------------------------------
 // 3. 요청 시스템 (Viewer는 요청만)
