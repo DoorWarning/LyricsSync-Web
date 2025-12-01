@@ -16,17 +16,49 @@
 <div align="center">
   <a href="./PRD/prd.pdf">📄 프로젝트 기획서 (PRD)</a> | 
   <a href="./PRD/onepager.pdf">📑 원페이저 (One-Pager)</a>
+  <a href="./PRD/initialdesign.pdf">📑 디자인 계획서 (Initial-Design)</a>
 </div>
 
 ---
 
 ## 📸 게임 스크린샷 (Screenshots)
 
-| 메인 화면 | 로비 화면 |
-| :---: | :---: |
-| <img src="PRD/Screenshoot/MainMobile.png" height="400"/> | <img src="PRD/Screenshoot/LobbyMobile.png" height="400"/> |
-| **게임 진행** | **정답/결과** |
-| <img src="PRD/Screenshoot/GameMobile.png" height="400"/> | <img src="PRD/Screenshoot/PopupMobile.png" height="400"/> |
+<table>
+  <thead>
+    <tr>
+      <th width="15%" align="center">화면 (Screen)</th>
+      <th width="55%" align="center">Desktop</th>
+      <th width="30%" align="center">Mobile</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center"><b>메인 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/MainDesktop.png" height="250px" alt="Main Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/MainMobile.png" height="250px" alt="Main Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>로비 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/LobbyDesktop.png" height="250px" alt="Lobby Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/LobbyMobile.png" height="250px" alt="Lobby Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>게임 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/GameDesktop.png" height="250px" alt="Game Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/GameMobile.png" height="250px" alt="Game Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>정답 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/PopupDesktop.png" height="250px" alt="Popup Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/PopupMobile.png" height="250px" alt="Popup Mobile"></td>
+    </tr>
+    <tr>
+      <td align="center"><b>순위 화면</b></td>
+      <td align="center"><img src="PRD/Screenshoot/RankDesktop.png" height="250px" alt="Rank Desktop"></td>
+      <td align="center"><img src="PRD/Screenshoot/RankMobile.png" height="250px" alt="Rank Mobile"></td>
+    </tr>
+  </tbody>
+</table>
 
 > *데스크톱 및 모바일 환경을 모두 지원하는 반응형 디자인(Responsive Design)이 적용되었습니다.*
 
@@ -197,16 +229,17 @@ npm install
 node index.js
 ```
 
-3. 게임 클라이언트 실행
+### 3. 게임 클라이언트 실행
 ```bash
 cd lyrics-sync-client
 npm install
 npm run dev
 ```
-4. 관리자 클라이언트 실행
+
+### 4. 관리자 클라이언트 실행
 ```bash
 cd lyrics-sync-admin-client
 npm install
 npm run dev
 ```
-<div align="center"> © 2024 LyricsSync Team. All Rights Reserved. </div  v>
+<div align="center"> © 2025 LyricsSync. All Rights Reserved. </div>
