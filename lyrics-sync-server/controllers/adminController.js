@@ -406,13 +406,13 @@ exports.deleteSong = async (req, res) => {
 exports.handleWebhook = (req, res) => {
   console.log('🚀 [Webhook] GitHub Push 감지됨!');
 
-  // 1. GitHub에게 즉시 성공 응답을 보냄 (기다리지 않게 함)
-  res.status(200).json({ success: true, message: 'Webhook received. Deployment started in background.' });
+  // 1. GitHub에게 즉시 성공 응답을 보냄 (응답 타임아웃 방지)
+  res.status(200).json({ success: true, message: 'Webhook received. Deployment scheduled.' });
 
-  // 2. 응답 후, 백그라운드에서 배포 스크립트 실행 (비동기 처리)
-  // setTimeout을 사용하여 현재 요청-응답 사이클을 끊어줍니다.
+  // 2. 응답 후, 5초 뒤에 배포 스크립트 실행 (서버가 정상 상태로 돌아올 시간 확보)
+  // PM2가 서버를 재시작하는 시간을 충분히 확보해야 합니다.
   setTimeout(() => {
-      console.log('🔄 [Deploy] 배포 스크립트 실행 시작...');
+      console.log('🔄 [Deploy] 5초 지연 후 배포 스크립트 실행 시작...');
       
       // exec 옵션에 maxBuffer를 늘려 로그가 길어도 끊기지 않게 함
       exec('./deploy.sh', { cwd: __dirname + '/../', maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
@@ -424,8 +424,6 @@ exports.handleWebhook = (req, res) => {
         
         console.log(`✅ [Deploy Success] 배포 성공!`);
         console.log(`Stdout: ${stdout}`);
-        
-        // (선택 사항) 필요하다면 여기서 관리자에게 이메일/슬랙 알림 등을 보낼 수 있음
       });
-  }, 1000); // 1초 뒤 실행
+  }, 5000); // ⭐ 5초(5000ms)로 지연 시간 증가
 };
