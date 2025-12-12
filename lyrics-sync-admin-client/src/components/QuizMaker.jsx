@@ -1,71 +1,64 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../lib/api';
 
-const QuizMaker = ({ user, token, setFormData, apiUrl, showAlert }) => {
-  const [original, setOriginal] = useState('');
-  const [translated, setTranslated] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const handleGenerate = async () => {
-    setIsLoading(true);
+export default function QuizMaker() {
+  const [input, setInput] = useState('');
+  const [output, setOutput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleTranslate = async () => {
+    if (!input.trim()) return;
+    setLoading(true);
     try {
-      const response = await axios.post(`${apiUrl}/generate-translation`, 
-        { originalLyrics: original },
-        { 
-          headers: { 
-            // ⭐ [수정] 'Bearer ' 접두사를 붙여서 토큰 전송
-            'Authorization': `Bearer ${token}` 
-          }
-        }
-      );
-      setTranslated(response.data.translatedLyrics);
-      showAlert('번역이 완료되었습니다.', 'success');
+      const res = await api.post('/api/admin/generate-translation', { originalLyrics: input });
+      if (res.data.success) {
+        setOutput(res.data.translatedLyrics);
+      }
     } catch (err) {
-      // 에러 메시지 상세 표시
-      const msg = err.response?.data?.message || err.message;
-      showAlert(`번역 실패: ${msg}`, 'error');
+      setOutput("오류 발생: " + err.message);
+    } finally {
+      setLoading(false);
     }
-    setIsLoading(false);
   };
-  
-  const useTranslation = () => {
-    setFormData(prev => ({ ...prev, translated_lyrics: translated, original_lyrics: original }));
-  };
-  
+
   return (
-    <div className="form-panel">
-      <h3>엉뚱한 번역 (Gemini)</h3>
-      <textarea 
-        value={original} 
-        onChange={(e) => setOriginal(e.target.value)} 
-        placeholder="여기에 번역할 원본 가사 부분을 입력하세요..." 
-      />
-      <button 
-        onClick={handleGenerate} 
-        disabled={isLoading || !original} 
-        className="btn-blue" 
-        style={{ width: '100%', marginTop: '10px' }}
-      >
-        {isLoading ? '번역 중...' : '번역 생성'}
-      </button>
-      {translated && (
-        <>
+    <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700 h-full flex flex-col">
+      <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+        🤖 AI 번역기 <span className="text-sm font-normal text-gray-400">(Gemini Pro)</span>
+      </h2>
+      
+      <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
+        {/* 입력창 */}
+        <div className="flex-1 flex flex-col">
+          <label className="text-gray-400 mb-2 font-medium">원본 텍스트</label>
           <textarea 
-            value={translated} 
-            readOnly 
-            style={{ height: '100px', backgroundColor: '#1A2036', marginTop: '10px' }} 
+            className="flex-1 w-full bg-gray-900 border border-gray-600 rounded-lg p-4 text-white resize-none focus:border-indigo-500 outline-none custom-scrollbar"
+            placeholder="번역할 가사나 문장을 입력하세요..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
           />
+        </div>
+
+        {/* 컨트롤 */}
+        <div className="flex md:flex-col justify-center items-center gap-4">
           <button 
-            onClick={useTranslation} 
-            className="btn-primary" 
-            style={{ width: '100%', marginTop: '10px' }}
+            onClick={handleTranslate} 
+            disabled={loading || !input}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-110 active:scale-95"
+            title="번역 실행"
           >
-            이 번역 사용하기
+            {loading ? '⏳' : '▶️'}
           </button>
-        </>
-      )}
+        </div>
+
+        {/* 결과창 */}
+        <div className="flex-1 flex flex-col">
+          <label className="text-gray-400 mb-2 font-medium">AI 번역 결과</label>
+          <div className="flex-1 w-full bg-gray-900 border border-gray-600 rounded-lg p-4 text-indigo-300 overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+            {output || <span className="text-gray-600">결과가 여기에 표시됩니다.</span>}
+          </div>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default QuizMaker;
+}

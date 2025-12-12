@@ -2,9 +2,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
-import './admin.css';
-// ⭐ [추가]
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import './index.css'; // ⭐ admin.css 대신 index.css를 불러와야 Tailwind가 먹힙니다!
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 

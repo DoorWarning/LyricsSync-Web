@@ -1,68 +1,33 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+@theme {
+  /* 1. 배경색 (Backgrounds) */
+  --color-main: #1A2036;       /* 메인 배경 (Deep Navy) */
+  --color-panel: #252D4A;      /* 패널/사이드바/카드 배경 */
+  --color-input: #0F1524;      /* 입력창 배경 (Very Dark) */
+  
+  /* 2. 포인트 색상 (Accents) */
+  --color-brand-blue: #4DFFFF; /* 네온 시안 (강조 텍스트/버튼) */
+  --color-brand-dark: #3E5F8A; /* 짙은 파랑 (버튼 배경) */
+  --color-brand-pink: #FF4081; /* 핑크 (포인트/배지) */
+  
+  /* 3. 텍스트 색상 */
+  --color-text-main: #FFFFFF;
+  --color-text-sub: #B0B8D9;   /* 연한 보라빛 회색 */
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+/* 스크롤바 커스텀 (테마 색상 적용) */
+::-webkit-scrollbar {
+  width: 10px;
 }
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+::-webkit-scrollbar-track {
+  background: var(--color-main); 
 }
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-dark); 
+  border-radius: 5px;
+  border: 2px solid var(--color-main);
 }
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-blue); 
 }

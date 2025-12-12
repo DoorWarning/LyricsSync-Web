@@ -4,7 +4,7 @@ import { useSound } from '../context/SoundContext';
 import VolumeControl from '../components/VolumeControl';
 import robotSvg from '../LOGO/robot.svg';
 
-// --- [오디오 설정] 로컬 UI용 ---
+// --- [오디오 설정] ---
 const buttonAudio = new Audio('/sounds/button.ogg'); 
 const selectAudio = new Audio('/sounds/select.ogg');   
 const alertAudio = new Audio('/sounds/result.ogg'); 
@@ -12,6 +12,8 @@ const alertAudio = new Audio('/sounds/result.ogg');
 buttonAudio.volume = 0.2; buttonAudio.preload = 'auto'; 
 selectAudio.volume = 0.5; selectAudio.preload = 'auto';
 alertAudio.volume = 0.5; alertAudio.preload = 'auto';
+
+// --- [헬퍼 함수] ---
 
 const getAvatar = (avatarId) => {
   try { return new URL(`../AVATARS/${avatarId}.png`, import.meta.url).href; } 
@@ -24,6 +26,58 @@ const getSafeList = (data) => {
   return [];
 };
 
+// [핵심 1] ID 추출 로직 개선 (중첩 객체 대응)
+const getStrId = (item) => {
+    if (!item) return 'unknown';
+    
+    // 1. item 자체가 문자열/숫자면 그대로
+    if (typeof item === 'string') return item;
+    if (typeof item === 'number') return String(item);
+
+    // 2. item이 잘못 감싸진 형태라면 ({ id: {...} }) 내부의 진짜 객체를 꺼냄
+    const realItem = item.id && item.id._id ? item.id : item;
+
+    // 3. 진짜 ID 추출
+    const rawId = realItem._id || realItem.id;
+    return rawId ? String(rawId) : 'unknown';
+};
+
+// [핵심 2] 이름 렌더링 로직 개선 (중첩 객체 대응)
+const renderCollectionName = (collection) => {
+    if (!collection) return "알 수 없음";
+    
+    // 1. collection이 문자열이면 그대로
+    if (typeof collection === 'string') return collection;
+
+    // 2. collection.name이 문자열이면 그대로 (정상 케이스)
+    if (typeof collection.name === 'string') return collection.name;
+
+    // 3. collection.name이 객체라면? (현재 발생 중인 문제 상황: {name: {_id:..., name: 'kpop'}})
+    if (collection.name && typeof collection.name === 'object') {
+        // 내부 객체에서 name을 다시 찾음
+        if (collection.name.name && typeof collection.name.name === 'string') {
+            return collection.name.name;
+        }
+    }
+
+    // 4. collection.id 객체 안에 name이 있는 경우
+    if (collection.id && typeof collection.id === 'object' && collection.id.name) {
+        return String(collection.id.name);
+    }
+
+    // 5. description으로 시도
+    const realItem = collection.name && typeof collection.name === 'object' ? collection.name : collection;
+    if (realItem.description) return String(realItem.description);
+
+    return "이름 없음";
+};
+
+// 선택된 ID만 문자열 리스트로 추출
+const getCleanSelectedIds = (settingsData) => {
+    return getSafeList(settingsData).map(item => getStrId(item));
+};
+
+// --- [스타일 Variants] ---
 const desktopReadyVariants = {
   ready: { backgroundColor: '#4ade80', color: '#000000' },
   waiting: { backgroundColor: '#4b5563', color: '#ffffff' },
@@ -41,6 +95,8 @@ const cardVariants = {
   visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", stiffness: 400, damping: 20, duration: 0.4 } },
   exit: { opacity: 0, scale: 0.5, y: -20, transition: { duration: 0.2 } }
 };
+
+// --- [컴포넌트] ---
 
 const CustomCheckbox = ({ checked }) => {
   return (
@@ -84,25 +140,42 @@ const CustomAlert = ({ isOpen, message, type = 'error', onClose }) => {
   );
 };
 
-const DesktopPlayerCard = React.memo(({ id, player, hostId, myPlayerId }) => {
+const DesktopPlayerCard = React.memo(({ id, player, hostId, myPlayerId, socket }) => {
   const isHost = id === hostId;
+  const isMe = id === myPlayerId;
   const statusKey = isHost ? 'host' : (player.isReady ? 'ready' : 'waiting');
   const statusText = isHost ? '방장' : (player.isReady ? '준비완료' : '대기중');
+
+  const handleChangeAvatar = () => {
+    if (isMe && socket) socket.emit('changeAvatar');
+  };
+
   return (
-    <motion.div layout variants={cardVariants} initial="hidden" animate="visible" exit="exit" transition={{ type: "spring", stiffness: 300, damping: 25 }} className={`w-full p-4 rounded-2xl hidden sm:flex items-center gap-4 ${myPlayerId === id ? 'bg-sky-500/50' : 'bg-sky-400'}`}>
-      <img src={getAvatar(player.avatar || 'av_1')} alt={player.nickname} className="w-12 h-12 rounded-full border-2 border-white" />
+    <motion.div layout variants={cardVariants} initial="hidden" animate="visible" exit="exit" transition={{ type: "spring", stiffness: 300, damping: 25 }} className={`w-full p-4 rounded-2xl hidden sm:flex items-center gap-4 ${isMe ? 'bg-sky-500/50' : 'bg-sky-400'}`}>
+      <img 
+        src={getAvatar(player.avatar || 'av_1')} 
+        alt={player.nickname} 
+        onClick={handleChangeAvatar}
+        className={`w-12 h-12 rounded-full border-2 border-white ${isMe ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      />
       <div className="flex-grow text-left"><p className="text-xl font-bold text-slate-200">{player.nickname}{isHost && ' 👑'}</p></div>
       <motion.div className="w-24 text-center py-1 rounded-full text-sm font-bold shadow-md" variants={desktopReadyVariants} initial={statusKey} animate={statusKey} transition={{ duration: 0.3 }}>{statusText}</motion.div>
     </motion.div>
   );
 }, (prev, next) => prev.player.isReady === next.player.isReady && prev.player.avatar === next.player.avatar && prev.player.nickname === next.player.nickname && prev.hostId === next.hostId);
 
-const MobilePlayerCard = React.memo(({ id, player, hostId, myPlayerId }) => {
+const MobilePlayerCard = React.memo(({ id, player, hostId, myPlayerId, socket }) => {
   const isHost = id === hostId;
+  const isMe = id === myPlayerId;
   const statusKey = isHost ? 'host' : (player.isReady ? 'ready' : 'waiting');
+
+  const handleChangeAvatar = () => {
+    if (isMe && socket) socket.emit('changeAvatar');
+  };
+
   return (
-    <motion.div layout variants={cardVariants} initial="hidden" animate="visible" exit="exit" transition={{ type: "spring", stiffness: 300, damping: 25 }} className={`w-full flex-shrink-0 flex sm:hidden flex-col items-center gap-1 p-2 rounded-2xl ${myPlayerId === id ? 'bg-sky-500/50' : 'bg-sky-400'}`}>
-      <motion.div className="relative p-1 rounded-full" variants={mobileReadyVariants} initial={statusKey} animate={statusKey} transition={{ duration: 0.3 }}>
+    <motion.div layout variants={cardVariants} initial="hidden" animate="visible" exit="exit" transition={{ type: "spring", stiffness: 300, damping: 25 }} className={`w-full flex-shrink-0 flex sm:hidden flex-col items-center gap-1 p-2 rounded-2xl ${isMe ? 'bg-sky-500/50' : 'bg-sky-400'}`}>
+      <motion.div onClick={handleChangeAvatar} className={`relative p-1 rounded-full ${isMe ? 'cursor-pointer' : ''}`} variants={mobileReadyVariants} initial={statusKey} animate={statusKey} transition={{ duration: 0.3 }}>
         <img src={getAvatar(player.avatar || 'av_1')} alt={player.nickname} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-slate-800" />
         {isHost && <div className="absolute -top-1 -right-1 text-lg sm:text-xl drop-shadow-md">👑</div>}
       </motion.div>
@@ -125,11 +198,18 @@ const ActionButtons = ({ isHost, myPlayer, settings, onCopyLink, onStartGame, on
     );
 };
 
-const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelectTeam, onReady, onStartGame, allSongCollections, onOpenDescription }) => {
+const LobbyView = ({ socket, roomState, myPlayerId, onGoBack, onUpdateSettings, onSelectTeam, onReady, onStartGame, allSongCollections, onOpenDescription }) => {
   const [alertInfo, setAlertInfo] = useState({ isOpen: false, message: '', type: 'error' });
   const [activeTab, setActiveTab] = useState('players'); 
   const { playSound } = useSound();
   
+  // 데이터 디버깅용 (콘솔에서 확인 가능)
+  useEffect(() => {
+    if(allSongCollections && allSongCollections.length > 0) {
+        console.log("로드된 모음집 데이터:", allSongCollections);
+    }
+  }, [allSongCollections]);
+
   const closeAlert = () => setAlertInfo({ ...alertInfo, isOpen: false });
   if (!roomState) return <div className="text-white">로딩 중...</div>;
   
@@ -140,6 +220,8 @@ const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelect
   const teamB = Object.entries(players).filter(([, p]) => p.team === 'B');
   const noTeam = Object.entries(players).filter(([, p]) => !p.team);
   const spring = { type: "spring", stiffness: 700, damping: 30 };
+
+  const currentSelectedIds = getCleanSelectedIds(settings.songCollections);
 
   const handleCopyLink = async () => {
     try {
@@ -173,8 +255,10 @@ const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelect
     }
     const notReadyPlayers = Object.entries(players).filter(([id, p]) => { if (id === hostId) return false; return !p.isReady; });
     if (notReadyPlayers.length > 0) { setAlertInfo({ isOpen: true, message: `아직 준비하지 않은 플레이어가 있습니다!`, type: 'error' }); return; }
-    const safeCollections = getSafeList(settings.songCollections);
-    const validSelectedCollections = safeCollections.filter(id => allSongCollections.some(collection => collection.id === id));
+    
+    // 유효성 검사 (ID 문자열 비교)
+    const validSelectedCollections = allSongCollections.filter(c => currentSelectedIds.includes(getStrId(c)));
+    
     if (validSelectedCollections.length === 0) { setAlertInfo({ isOpen: true, message: '최소 한 개의 곡 모음집을 선택해야 합니다!', type: 'error' }); return; }
     onStartGame();
   };
@@ -187,8 +271,7 @@ const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelect
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => { playSound(buttonAudio); onGoBack(); }} className="bg-indigo-900 text-slate-200 font-bold py-2 px-4 text-lg rounded-2xl hover:bg-indigo-800 transition md:py-3 md:px-8 md:!text-2xl">뒤로</motion.button>
         <div className="flex flex-col items-center"><img src={robotSvg} alt="Robot Logo" className="w-12 h-12 mb-2" /><h2 className="text-lg text-slate-400">방 코드</h2><p className="text-2xl font-bold text-rose-500 tracking-widest">{roomCode}</p></div>
         <div className="flex justify-end w-24">
-            {/* 2. VolumeControl에 prop 전달 */}
-            <VolumeControl onOpenDescription={onOpenDescription} /> {/* ⭐ [수정] 전달 */}
+            <VolumeControl onOpenDescription={onOpenDescription} />
         </div>
       </div>
 
@@ -198,6 +281,7 @@ const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelect
       </div>
       
       <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
+        {/* 플레이어 목록 섹션 */}
         <div className={`w-full md:w-2/3 bg-indigo-900 p-6 rounded-2xl flex-col ${activeTab === 'players' ? 'flex' : 'hidden md:flex'}`}>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 items-center">
             <h3 className="text-lg sm:text-2xl font-bold text-rose-500 text-center sm:text-left">플레이어 {Object.keys(players).length} / {settings.maxPlayers}</h3>
@@ -209,22 +293,23 @@ const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelect
                 <div className="flex flex-col items-center bg-red-900/20 rounded-xl p-2 h-full">
                   <h4 className="text-sm sm:text-xl font-bold text-red-400 mb-2 text-center">TEAM A ({teamA.length})</h4>
                   {myPlayer && myPlayer.team !== 'A' && (<motion.button whileTap={{ scale: 0.9 }} onClick={() => { playSound(buttonAudio); onSelectTeam('A'); }} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg mb-2 transition">참가</motion.button>)}
-                  <div className="w-full flex flex-col gap-2"><AnimatePresence>{teamA.map(([id, player]) => (<React.Fragment key={id}><DesktopPlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} /><MobilePlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} /></React.Fragment>))}</AnimatePresence></div>
+                  <div className="w-full flex flex-col gap-2"><AnimatePresence>{teamA.map(([id, player]) => (<React.Fragment key={id}><DesktopPlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} socket={socket} /><MobilePlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} socket={socket} /></React.Fragment>))}</AnimatePresence></div>
                 </div>
                 <div className="flex flex-col items-center bg-blue-900/20 rounded-xl p-2 h-full">
                   <h4 className="text-sm sm:text-xl font-bold text-blue-400 mb-2 text-center">TEAM B ({teamB.length})</h4>
                     {myPlayer && myPlayer.team !== 'B' && (<motion.button whileTap={{ scale: 0.9 }} onClick={() => { playSound(buttonAudio); onSelectTeam('B'); }} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg mb-2 transition">참가</motion.button>)}
-                  <div className="w-full flex flex-col gap-2"><AnimatePresence>{teamB.map(([id, player]) => (<React.Fragment key={id}><DesktopPlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} /><MobilePlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} /></React.Fragment>))}</AnimatePresence></div>
+                  <div className="w-full flex flex-col gap-2"><AnimatePresence>{teamB.map(([id, player]) => (<React.Fragment key={id}><DesktopPlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} socket={socket} /><MobilePlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} socket={socket} /></React.Fragment>))}</AnimatePresence></div>
                 </div>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                <AnimatePresence>{noTeam.map(([id, player]) => (<React.Fragment key={id}><DesktopPlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} /><MobilePlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} /></React.Fragment>))}</AnimatePresence>
+                <AnimatePresence>{noTeam.map(([id, player]) => (<React.Fragment key={id}><DesktopPlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} socket={socket} /><MobilePlayerCard id={id} player={player} hostId={hostId} myPlayerId={myPlayerId} socket={socket} /></React.Fragment>))}</AnimatePresence>
               </div>
             )}
           </div>
         </div>
 
+        {/* 설정 섹션 */}
         <div className={`w-full md:w-1/3 flex-col justify-between gap-6 ${activeTab === 'settings' ? 'flex' : 'hidden md:flex'}`}>
           <div className="bg-indigo-900 p-6 rounded-2xl">
             <h3 className="text-2xl font-bold text-slate-200 mb-4">게임 설정</h3>
@@ -235,12 +320,39 @@ const LobbyView = ({ roomState, myPlayerId, onGoBack, onUpdateSettings, onSelect
                     <div className="flex-1"><label className="block text-slate-200 text-left font-bold mb-2">팀전</label><div className={`flex items-center w-14 h-8 p-1 rounded-full cursor-pointer transition-colors ${settings.isTeamMode ? 'bg-rose-500' : 'bg-gray-600'}`} onClick={() => { playSound(selectAudio); onUpdateSettings({ target: { name: 'isTeamMode', type: 'checkbox', checked: !settings.isTeamMode }})}}><motion.div className="w-6 h-6 bg-white rounded-full shadow-md" animate={{ x: settings.isTeamMode ? 24 : 0 }} transition={spring} /></div></div>
                     <div className="flex-1"><label className="block text-slate-200 text-left font-bold mb-2">라운드 수</label><select name="maxRounds" value={settings.maxRounds} onChange={(e) => { playSound(selectAudio); onUpdateSettings(e); }} className="w-full p-3 rounded-lg bg-indigo-950 border border-slate-700 text-white">{[5, 10, 15, 20].map(num => <option key={num} value={num}>{num}라운드</option>)}</select></div>
                   </div>
-                  <div><label className="block text-slate-200 text-left font-bold mb-2">곡 모음집</label><div className="space-y-2">{allSongCollections.map(collection => { const currentList = getSafeList(settings.songCollections); const isChecked = currentList.includes(collection.id); return (<div key={collection.id} onClick={() => { playSound(selectAudio); onUpdateSettings({ target: { name: 'songCollections', value: collection.id, type: 'checkbox', checked: !isChecked }}); }} className="flex items-center justify-between bg-sky-400 p-3 rounded-lg cursor-pointer hover:bg-sky-500 transition-colors select-none"><span className="font-bold text-slate-800">{collection.name}</span><div className="pointer-events-none"><CustomCheckbox name="songCollections" value={collection.id} checked={isChecked} onChange={() => {}} /></div></div>); })}</div></div>
+                  <div><label className="block text-slate-200 text-left font-bold mb-2">곡 모음집</label><div className="space-y-2">
+                    {/* [Host View] 모음집 리스트 */}
+                    {allSongCollections.map((collection, idx) => { 
+                        const collectionId = getStrId(collection); 
+                        const isChecked = currentSelectedIds.includes(collectionId); 
+                        return (
+                            <div key={`${collectionId}-${idx}`} onClick={() => { 
+                                playSound(selectAudio); 
+                                onUpdateSettings({ target: { name: 'songCollections', value: collectionId, type: 'checkbox', checked: !isChecked }}); 
+                            }} className="flex items-center justify-between bg-sky-400 p-3 rounded-lg cursor-pointer hover:bg-sky-500 transition-colors select-none">
+                                <span className="font-bold text-slate-800">
+                                    {renderCollectionName(collection)}
+                                </span>
+                                <div className="pointer-events-none"><CustomCheckbox name="songCollections" value={collectionId} checked={isChecked} onChange={() => {}} /></div>
+                            </div>
+                        ); 
+                    })}
+                  </div></div>
                 </>
               ) : (
                 <>
                   <div className="flex items-center gap-4 mb-4"><div className="flex-1 text-left"><p className="font-bold text-slate-400">팀전</p><p className="text-xl font-bold">{settings.isTeamMode ? "활성화" : "비활성화"}</p></div><div className="flex-1 text-left"><p className="font-bold text-slate-400">라운드 수</p><p className="text-xl font-bold">{settings.maxRounds} 라운드</p></div></div>
-                  <div className="text-left"><p className="font-bold text-slate-400 mb-2">선택된 곡 모음집</p><div className="space-y-2">{getSafeList(settings.songCollections).map(id => allSongCollections.find(c => c.id === id)).filter(Boolean).map(collection => (<div key={collection.id} className="bg-sky-400 text-slate-800 font-bold p-3 rounded-lg">{collection.name}</div>))}</div></div>
+                  <div className="text-left"><p className="font-bold text-slate-400 mb-2">선택된 곡 모음집</p><div className="space-y-2">
+                    {/* [Guest View] 모음집 리스트 */}
+                    {allSongCollections
+                      .filter(c => currentSelectedIds.includes(getStrId(c)))
+                      .map((collection, idx) => (
+                        <div key={`${getStrId(collection)}-${idx}`} className="bg-sky-400 text-slate-800 font-bold p-3 rounded-lg">
+                          {renderCollectionName(collection)}
+                        </div>
+                      ))
+                    }
+                  </div></div>
                 </>
               )}
             </div>

@@ -1,91 +1,74 @@
-// src/components/RequestList.jsx
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import api from '../lib/api';
 
-// ⭐ [수정] showAlert, showConfirm Props 추가
-const RequestList = ({ user, token, onRequestHandled, apiUrl, showAlert, showConfirm }) => {
-  const [requests, setRequests] = useState([]);
+const RequestList = ({ requests, onRequestProcessed, showAlert, showConfirm }) => {
+  const [loadingId, setLoadingId] = useState(null);
+  const safeRequests = Array.isArray(requests) ? requests : [];
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
-
-  const fetchRequests = async () => {
-    try {
-      const response = await axios.get(`${apiUrl}/requests`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      setRequests(response.data.requests);
-    } catch (err) {
-      console.error(err);
-      // (선택) 로딩 실패 시에도 커스텀 알림을 띄울 수 있습니다.
-      // showAlert('요청 목록을 불러오지 못했습니다.', 'error');
-    }
-  };
-
-  // ⭐ [수정] 커스텀 팝업 적용
   const handleAction = (requestId, action) => { 
-    const actionText = action === 'approve' ? '승인' : '거절';
-
-    // 확인 버튼을 눌렀을 때 실행될 실제 로직
     const actionFn = async () => {
+        setLoadingId(requestId);
         try {
-            const response = await axios.post(`${apiUrl}/requests/${requestId}/${action}`, {}, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            // 성공 알림
+            const response = await api.post(`/api/admin/requests/${requestId}/${action}`);
             showAlert(response.data.message, 'success');
-            
-            fetchRequests(); // 목록 갱신
-            if (action === 'approve') onRequestHandled(); // 승인이면 전체 노래 목록도 갱신
-            
+            if (onRequestProcessed) onRequestProcessed();
         } catch (err) {
-            // 실패 알림
-            showAlert('처리 실패: ' + (err.response?.data?.message || err.message), 'error');
+            showAlert('처리 실패', 'error');
+        } finally {
+            setLoadingId(null);
         }
     };
-
-    // 커스텀 확인창 호출
-    showConfirm(`${actionText} 하시겠습니까?`, actionFn);
+    showConfirm(`${action === 'approve' ? '승인' : '거절'} 하시겠습니까?`, actionFn);
   };
 
   return (
-    <div className="list-panel">
-      <h3>대기 중인 수정 요청 ({requests.length})</h3>
-      {requests.length === 0 && <p>대기 중인 요청이 없습니다.</p>}
+    <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
+      <h3 className="text-2xl font-bold text-white mb-6">📩 대기 중인 요청 목록 ({safeRequests.length})</h3>
       
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        {requests.map(req => (
-          <div key={req._id} className="panel" style={{ border: '1px solid var(--accent-blue)', padding: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <span style={{ color: 'var(--accent-pink)', fontWeight: 'bold' }}>
-                [{req.requestType.toUpperCase()}]
-              </span>
-              <span style={{ color: 'gray', fontSize: '0.9em' }}>
-                요청자: {req.requesterEmail} | {new Date(req.createdAt).toLocaleString()}
-              </span>
-            </div>
-            
-            {/* 요청 내용 미리보기 */}
-            <div style={{ marginBottom: '10px', fontSize: '0.9em', textAlign: 'left' }}>
-              {req.requestType === 'delete' ? (
-                 <p>대상 곡 ID: {req.targetSongId?._id || req.targetSongId} (삭제 요청)</p>
-              ) : (
-                <>
-                  <p><strong>제목:</strong> {req.data.title}</p>
-                  <p><strong>가수:</strong> {req.data.artist}</p>
-                  <p><strong>번역:</strong> {req.data.translated_lyrics?.substring(0, 50)}...</p>
-                </>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => handleAction(req._id, 'approve')} className="btn-primary" style={{ flex: 1 }}>승인</button>
-              <button onClick={() => handleAction(req._id, 'reject')} className="btn-secondary" style={{ flex: 1 }}>거절</button>
-            </div>
-          </div>
-        ))}
+      <div className="h-[500px] overflow-y-auto bg-gray-900 rounded-lg border border-gray-700 p-2 custom-scrollbar">
+        {safeRequests.length === 0 ? (
+          <div className="text-center p-10 text-gray-500">대기 중인 요청이 없습니다.</div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-800 text-gray-400 border-b border-gray-700">
+                <th className="p-3">유형</th>
+                <th className="p-3">대상 정보</th>
+                <th className="p-3">요청 내용</th>
+                <th className="p-3">요청자</th>
+                <th className="p-3 text-right">관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              {safeRequests.map((req) => (
+                <tr key={req._id} className="border-b border-gray-700 hover:bg-gray-800 transition">
+                  <td className="p-3">
+                    <span className={`inline-block px-2 py-1 rounded text-xs border ${req.requestType === 'delete' ? 'bg-red-900/50 text-red-300 border-red-800' : 'bg-blue-900/50 text-blue-300 border-blue-800'}`}>
+                      {req.requestType.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="p-3">
+                    <div className="font-bold text-white">{req.data?.title || req.targetSongId?.title || '제목 없음'}</div>
+                    <div className="text-gray-400 text-sm">{req.data?.artist || req.targetSongId?.artist || '가수 없음'}</div>
+                  </td>
+                  <td className="p-3 text-gray-300 text-sm">
+                    {req.requestType === 'create' && `새 노래 (퀴즈 ${req.data?.quizzes?.length || 0}개)`}
+                    {req.requestType === 'update' && `정보 수정`}
+                    {req.requestType === 'delete' && '삭제 요청'}
+                  </td>
+                  <td className="p-3 text-gray-400 text-sm">
+                    <div>{req.requesterEmail}</div>
+                    <div className="text-xs">{new Date(req.createdAt).toLocaleDateString()}</div>
+                  </td>
+                  <td className="p-3 text-right space-x-2">
+                    <button onClick={() => handleAction(req._id, 'approve')} disabled={loadingId === req._id} className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-sm transition disabled:opacity-50">승인</button>
+                    <button onClick={() => handleAction(req._id, 'reject')} disabled={loadingId === req._id} className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm transition disabled:opacity-50">거절</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

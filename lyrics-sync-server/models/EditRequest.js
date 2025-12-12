@@ -1,22 +1,15 @@
 const mongoose = require('mongoose');
 
 const editRequestSchema = new mongoose.Schema({
-  requesterEmail: String, // 요청한 사람
+  requesterEmail: { type: String, required: true },
   requestType: { type: String, enum: ['create', 'update', 'delete'], required: true },
-  targetSongId: { type: mongoose.Schema.Types.ObjectId, ref: 'Song' }, // 수정/삭제 시 대상 곡 ID
+  targetSongId: { type: mongoose.Schema.Types.ObjectId, ref: 'Song' },
   
-  // 요청한 데이터 (새 노래 정보 또는 수정할 정보)
-  data: {
-    title: String,
-    artist: String,
-    original_lyrics: String,
-    translated_lyrics: String,
-    hint: String,
-    collectionNames: [String]
-  },
+  // ⭐ [핵심] Mixed 타입: 내부에 quizzes 배열이든 뭐든 다 저장 가능하게 함
+  data: { type: mongoose.Schema.Types.Mixed },
   
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   createdAt: { type: Date, default: Date.now }
-});
+}, { strict: false }); // ⭐ strict: false로 설정하여 정의되지 않은 필드도 저장 허용
 
 module.exports = mongoose.model('EditRequest', editRequestSchema);

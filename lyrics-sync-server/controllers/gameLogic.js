@@ -1,10 +1,12 @@
 // controllers/gameLogic.js
+const mongoose = require('mongoose'); // [추가] ID 유효성 검사 목적
 const Song = require('../models/Song');
+const PlayList = require('../models/PlayList');
 
 const rooms = {};
 const roomTimers = {};
 
-// [추가] 라운드 지속 시간 상수 (60초)
+// 라운드 지속 시간 상수 (60초)
 const ROUND_DURATION_MS = 60000; 
 
 function generateRoomCode() {
@@ -36,54 +38,98 @@ async function startNewRound(io, roomName) {
   
   room.gameState.currentRound++;
   
-  // [수정] 라운드 종료 시간 계산
+  // 라운드 종료 시간 계산
   const roundEndTime = Date.now() + ROUND_DURATION_MS;
   room.gameState.roundEndTime = roundEndTime;
 
   console.log(`[${roomName}] 라운드 ${room.gameState.currentRound} 시작`);
 
   try {
-    if (room.settings.songCollections.length === 0) {
+    const selectedInputs = room.settings.songCollections; // 예: ['64abc...', 'kpop-classics']
+
+    if (!selectedInputs || selectedInputs.length === 0) {
       io.to(roomName).emit('gameError', '선택된 곡 모음집이 없습니다.');
       return;
     }
     
-    const randomSong = await Song.aggregate([
-      { $match: { collectionNames: { $in: room.settings.songCollections } } },
-      { $sample: { size: 1 } }
-    ]);
+    // ⭐ [핵심 수정] ID와 이름을 구분하여 안전하게 검색
+    const targetIds = [];
+    const targetNames = [];
 
-    if (randomSong.length === 0) {
-      io.to(roomName).emit('gameError', '선택된 곡 모음집에 노래가 없습니다.');
+    selectedInputs.forEach(input => {
+        // MongoDB ID 형식(24자리 Hex)인지 확인
+        if (mongoose.Types.ObjectId.isValid(input) && String(input).length === 24) {
+            targetIds.push(input);
+        } else {
+            // 아니면 이름으로 간주
+            targetNames.push(input);
+        }
+    });
+
+    // ID로 찾거나 OR 이름으로 찾기
+    const playlists = await PlayList.find({
+        $or: [
+            { _id: { $in: targetIds } },
+            { name: { $in: targetNames } }
+        ]
+    });
+    
+    // 가져온 플레이리스트들에서 노래 ID 추출
+    let allSongIds = [];
+    playlists.forEach(pl => {
+        allSongIds = [...allSongIds, ...pl.songs];
+    });
+    
+    // 중복 제거
+    const uniqueSongIds = [...new Set(allSongIds.map(id => id.toString()))];
+
+    if (uniqueSongIds.length === 0) {
+      console.log(`[${roomName}] 에러: 선택된 모음집(${selectedInputs})에 노래가 없음.`);
+      io.to(roomName).emit('gameError', '선택된 모음집에 노래가 없습니다.');
       return;
     }
+
+    // 2. 랜덤하게 노래 하나 선택
+    const randomIndex = Math.floor(Math.random() * uniqueSongIds.length);
+    const randomSongId = uniqueSongIds[randomIndex];
     
-    const quiz = randomSong[0];
+    const song = await Song.findById(randomSongId);
+
+    if (!song || !song.quizzes || song.quizzes.length === 0) {
+        console.error(`노래 데이터 오류: ${randomSongId}`);
+        io.to(roomName).emit('gameError', '문제 생성 중 오류가 발생했습니다.');
+        return;
+    }
+
+    // 3. 해당 노래의 퀴즈 중 하나를 랜덤 선택
+    const randomQuiz = song.quizzes[Math.floor(Math.random() * song.quizzes.length)];
     
-    room.gameState.currentAnswer = quiz.title;
-    room.gameState.currentOriginalLyrics = quiz.original_lyrics;
-    room.gameState.currentTranslatedLyrics = quiz.translated_lyrics;
-    room.gameState.currentHint = quiz.hint;
-    room.gameState.currentArtistHint = quiz.artist;
+    // 4. 게임 상태 업데이트
+    room.gameState.currentAnswer = song.title;
+    room.gameState.currentArtistHint = song.artist;
+    room.gameState.currentOriginalLyrics = randomQuiz.original_lyrics;
+    room.gameState.currentTranslatedLyrics = randomQuiz.translated_lyrics;
+    room.gameState.currentHint = randomQuiz.hint;
     room.gameState.roundStartTime = Date.now();
 
-    console.log(`[${roomName}] 정답: "${quiz.title}"`);
+    console.log(`[${roomName}] 정답: "${song.title}"`);
     
-    const songCollections = quiz.collectionNames;
-    const userCollections = room.settings.songCollections;
-    const relevantCollection = songCollections.find(c => userCollections.includes(c)) 
-                             || songCollections[0] 
-                             || 'Unknown';
+    // 화면 표시용 모음집 이름 찾기
+    const currentCollectionObj = playlists.find(pl => 
+        pl.songs.some(id => id.toString() === randomSongId)
+    );
+    const collectionDisplayName = currentCollectionObj ? currentCollectionObj.name : '알 수 없음';
 
-    // [수정] roundEndTime 포함하여 전송
+    // 클라이언트로 퀴즈 전송
     io.to(roomName).emit('newQuiz', { 
-      lyrics: quiz.translated_lyrics,
+      lyrics: randomQuiz.translated_lyrics,
       currentRound: room.gameState.currentRound,
       maxRounds: room.settings.maxRounds,
-      collectionName: relevantCollection,
+      collectionName: collectionDisplayName,
       roundEndTime: roundEndTime 
     }); 
 
+    // 타이머 설정
     roomTimers[roomName].hintTimer = setTimeout(() => {
       if (!rooms[roomName]) return; 
       io.to(roomName).emit('showHint', { type: '초성', hint: room.gameState.currentHint });
@@ -94,7 +140,6 @@ async function startNewRound(io, roomName) {
       io.to(roomName).emit('showHint', { type: '가수', hint: room.gameState.currentArtistHint });
     }, 45000);
 
-    // [수정] 제한 시간을 상수로 관리
     roomTimers[roomName].roundTimer = setTimeout(() => {
       if (!rooms[roomName]) return; 
       io.to(roomName).emit('roundEnd', { 
@@ -104,7 +149,6 @@ async function startNewRound(io, roomName) {
         translatedLyrics: room.gameState.currentTranslatedLyrics
       });
       
-      // 라운드 종료 시 상태 초기화
       room.gameState.currentAnswer = null;
       room.gameState.roundEndTime = null; 
       

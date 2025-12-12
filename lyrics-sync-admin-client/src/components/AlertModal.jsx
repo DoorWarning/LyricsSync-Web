@@ -1,46 +1,57 @@
 import React from 'react';
 
-const AlertModal = ({ customAlert, setCustomAlert }) => {
-    if (!customAlert) return null;
+const AlertModal = ({ isOpen, message, type, onClose, onConfirm }) => {
+  if (!isOpen) return null;
 
-    const { message, type, confirmAction } = customAlert;
-    const isConfirm = type === 'confirm';
+  const isConfirm = type === 'confirm';
 
-    const handleConfirm = () => {
-        if (isConfirm && confirmAction) confirmAction();
-        setCustomAlert(null);
-    };
-
-    const handleCancel = () => {
-        setCustomAlert(null);
-    };
-    
-    const color = type === 'error' ? '#FF5757' : (type === 'success' ? '#2ECC71' : 'var(--accent-pink)');
-    const title = type === 'confirm' ? '확인 필요' : (type === 'error' ? '오류 발생' : (type === 'success' ? '성공' : '알림'));
-
-    return (
-        <div className="modal-overlay">
-            <div className="modal-content" style={{ border: `2px solid ${color}` }}>
-                <h3 style={{ color: color, margin: '0 0 15px 0' }}>{title}</h3>
-                <p style={{ whiteSpace: 'pre-wrap', marginBottom: '25px' }}>{message}</p>
-                
-                {/* ⭐ [수정] justifyContent: 'center'로 변경하여 중앙 정렬 */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                    {isConfirm && (
-                        <button onClick={handleCancel} className="btn-secondary">
-                            취소
-                        </button>
-                    )}
-                    <button 
-                        onClick={handleConfirm} 
-                        className={isConfirm ? 'btn-primary' : (type === 'error' ? 'btn-danger' : 'btn-blue')}
-                    >
-                        {isConfirm ? '확인' : '닫기'}
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-600 max-w-sm w-full p-6 transform transition-all scale-100">
+        <div className="text-center mb-6">
+          <div className="text-4xl mb-4">
+            {type === 'success' && '✅'}
+            {type === 'error' && '⚠️'}
+            {type === 'info' && 'ℹ️'}
+            {type === 'confirm' && '❓'}
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">
+            {type === 'success' && '성공'}
+            {type === 'error' && '오류'}
+            {type === 'info' && '알림'}
+            {type === 'confirm' && '확인'}
+          </h3>
+          <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{message}</p>
         </div>
-    );
+
+        <div className="flex gap-3 justify-center">
+          {isConfirm ? (
+            <>
+              <button 
+                onClick={onClose} 
+                className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition font-medium"
+              >
+                취소
+              </button>
+              <button 
+                onClick={onConfirm} 
+                className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition font-medium"
+              >
+                확인
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={onClose} 
+              className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition font-medium"
+            >
+              확인
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default AlertModal;
