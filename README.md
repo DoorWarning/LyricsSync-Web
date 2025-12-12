@@ -118,9 +118,10 @@ MongoDB(Mongoose)를 사용하여 다음과 같은 데이터 모델을 관리합
 | :--- | :--- | :--- |
 | `title` | String | 노래 제목 (정답) |
 | `artist` | String | 가수 이름 (힌트 제공용) |
-| `original_lyrics` | String | 원본 가사 |
-| `translated_lyrics` | String | Gemini가 생성한 엉뚱한 번역 가사 (퀴즈 문제) |
-| `hint` | String | 초성 힌트 |
+| **`quizzes`** | **[Object]** | **퀴즈 데이터 배열** |
+| `quizzes.original_lyrics` | String | (배열 내부) 원본 가사 |
+| `quizzes.translated_lyrics` | String | (배열 내부) Gemini가 생성한 엉뚱한 번역 가사 (퀴즈 문제) |
+| `quizzes.hint` | String | (배열 내부) 초성 힌트 |
 | `collectionNames` | [String] | 노래가 속한 모음집 태그 배열 (예: `["kpop-2023", "ballad"]`) |
 
 ### 2. User (관리자 유저)
@@ -139,7 +140,7 @@ MongoDB(Mongoose)를 사용하여 다음과 같은 데이터 모델을 관리합
 | `requesterEmail` | String | 요청자 이메일 |
 | `requestType` | String | 요청 종류 (`'create'`, `'update'`, `'delete'`) |
 | `targetSongId` | ObjectId | 수정/삭제 대상 노래 ID (Optional) |
-| `data` | Object | 변경하려는 노래 데이터 (JSON) |
+| **`data`** | **Mixed** | **변경/추가하려는 노래 데이터 (quizzes 배열 포함)** |
 | `status` | String | 처리 상태 (`'pending'`, `'approved'`, `'rejected'`) |
 
 ---
@@ -227,13 +228,6 @@ gemini login
 cd lyrics-sync-server
 npm install
 node index.js
-```
-
-### 3. 게임 클라이언트 실행
-```bash
-cd lyrics-sync-client
-npm install
-npm run dev
 ```
 
 ### 4. 관리자 클라이언트 실행
