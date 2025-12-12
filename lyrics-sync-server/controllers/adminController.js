@@ -402,11 +402,30 @@ exports.deleteSong = async (req, res) => {
     }
 };
 
+// ⭐ [수정] Webhook 처리: "선 응답, 후 배포" 패턴 적용
 exports.handleWebhook = (req, res) => {
-  console.log('--- GitHub Webhook 수신 ---');
-  res.status(200).send('Webhook received.');
-  exec('./deploy.sh', { cwd: __dirname + '/../' }, (error, stdout, stderr) => {
-    if (error) console.error(`Deployment failed: ${error}`);
-    else console.log(`stdout: ${stdout}`);
-  });
+  console.log('🚀 [Webhook] GitHub Push 감지됨!');
+
+  // 1. GitHub에게 즉시 성공 응답을 보냄 (기다리지 않게 함)
+  res.status(200).json({ success: true, message: 'Webhook received. Deployment started in background.' });
+
+  // 2. 응답 후, 백그라운드에서 배포 스크립트 실행 (비동기 처리)
+  // setTimeout을 사용하여 현재 요청-응답 사이클을 끊어줍니다.
+  setTimeout(() => {
+      console.log('🔄 [Deploy] 배포 스크립트 실행 시작...');
+      
+      // exec 옵션에 maxBuffer를 늘려 로그가 길어도 끊기지 않게 함
+      exec('./deploy.sh', { cwd: __dirname + '/../', maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`❌ [Deploy Error] 배포 실패: ${error.message}`);
+          console.error(`Stderr: ${stderr}`);
+          return;
+        }
+        
+        console.log(`✅ [Deploy Success] 배포 성공!`);
+        console.log(`Stdout: ${stdout}`);
+        
+        // (선택 사항) 필요하다면 여기서 관리자에게 이메일/슬랙 알림 등을 보낼 수 있음
+      });
+  }, 1000); // 1초 뒤 실행
 };
