@@ -1,4 +1,4 @@
-# [최종 결과 보고서] AI 가사 퀴즈 게임 'LyricsSync'
+# [최종 결과 보고서] LyricsSync
 
 **과목명:** 실전웹서비스개발<br>
 **제출자:** 디지털미디어 202221110 고경문
@@ -27,28 +27,28 @@
     <tbody>
         <tr>
         <td align="center"><b>메인 화면</b></td>
-        <td align="center"><img src="PRD/Screenshoot/MainDesktop.png" height="250px" alt="Main Desktop"></td>
-        <td align="center"><img src="PRD/Screenshoot/MainMobile.png" height="250px" alt="Main Mobile"></td>
+        <td align="center"><img src="Screenshoot/MainDesktop.png" height="250px" alt="Main Desktop"></td>
+        <td align="center"><img src="Screenshoot/MainMobile.png" height="250px" alt="Main Mobile"></td>
         </tr>
         <tr>
         <td align="center"><b>로비 화면</b></td>
-        <td align="center"><img src="PRD/Screenshoot/LobbyDesktop.png" height="250px" alt="Lobby Desktop"></td>
-        <td align="center"><img src="PRD/Screenshoot/LobbyMobile.png" height="250px" alt="Lobby Mobile"></td>
+        <td align="center"><img src="Screenshoot/LobbyDesktop.png" height="250px" alt="Lobby Desktop"></td>
+        <td align="center"><img src="Screenshoot/LobbyMobile.png" height="250px" alt="Lobby Mobile"></td>
         </tr>
         <tr>
         <td align="center"><b>게임 화면</b></td>
-        <td align="center"><img src="PRD/Screenshoot/GameDesktop.png" height="250px" alt="Game Desktop"></td>
-        <td align="center"><img src="PRD/Screenshoot/GameMobile.png" height="250px" alt="Game Mobile"></td>
+        <td align="center"><img src="Screenshoot/GameDesktop.png" height="250px" alt="Game Desktop"></td>
+        <td align="center"><img src="Screenshoot/GameMobile.png" height="250px" alt="Game Mobile"></td>
         </tr>
         <tr>
         <td align="center"><b>정답 화면</b></td>
-        <td align="center"><img src="PRD/Screenshoot/PopupDesktop.png" height="250px" alt="Popup Desktop"></td>
-        <td align="center"><img src="PRD/Screenshoot/PopupMobile.png" height="250px" alt="Popup Mobile"></td>
+        <td align="center"><img src="Screenshoot/PopupDesktop.png" height="250px" alt="Popup Desktop"></td>
+        <td align="center"><img src="Screenshoot/PopupMobile.png" height="250px" alt="Popup Mobile"></td>
         </tr>
         <tr>
         <td align="center"><b>순위 화면</b></td>
-        <td align="center"><img src="PRD/Screenshoot/RankDesktop.png" height="250px" alt="Rank Desktop"></td>
-        <td align="center"><img src="PRD/Screenshoot/RankMobile.png" height="250px" alt="Rank Mobile"></td>
+        <td align="center"><img src="Screenshoot/RankDesktop.png" height="250px" alt="Rank Desktop"></td>
+        <td align="center"><img src="Screenshoot/RankMobile.png" height="250px" alt="Rank Mobile"></td>
         </tr>
     </tbody>
     </table>
@@ -246,6 +246,15 @@
 
 #### 4.3 오디오 리소스 최적화: 
 * 웹 환경에서 사운드 로딩 지연을 최소화하기 위해 가벼운 오디오 포맷을 사용하고, 초기 렌더링 시 사전 로드(Preload) 방식을 채택하여 끊김 없는 게임 환경을 구축하였습니다.
+
+### 5. MVCS 패턴을 통한 서버 로직 구조화
+* **문제:** 프로젝트 초기 `index.js`에 소켓 로직과 API 라우팅이 혼재되어 코드 복잡도가 증가했습니다.
+* **해결:** 코드를 역할별로 분리하는 **MVCS 아키텍처**를 도입했습니다.
+    * **Model:** DB 스키마 정의 (`models/`)
+    * **View:** 클라이언트에 전달할 JSON 응답 구조
+    * **Controller:** HTTP API 요청 처리 (`controllers/adminController.js`)
+    * **Service/Socket:** 핵심 게임 로직(`gameLogic.js`)과 실시간 이벤트 핸들러(`socketHandler.js`) 분리
+    * **결과:** 코드 가독성이 향상되고, 게임 로직 수정 시 API 로직에 영향을 주지 않도록 결합도를 낮췄습니다.
 
 ---
 
