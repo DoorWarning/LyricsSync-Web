@@ -6,6 +6,10 @@ const EditRequest = require('../models/EditRequest');
 const PlayList = require('../models/PlayList');
 const { exec } = require('child_process');
 
+const { execFile } = require('child_process');
+const path = require('path');
+const os = require('os');
+
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -116,13 +120,18 @@ exports.generateTranslation = async (req, res) => {
     `;
     
     const promptText = `당신은 옛날 구글 번역기입니다. 다음 규칙에 따라 번역하세요: ${rules} \n\n 원본 가사: ${originalLyrics}`;
-    const safePrompt = JSON.stringify(promptText);
-    const command = `agy -p ${safePrompt}`; 
+    
+    // 1. agy의 절대 경로 지정 (예: /home/ubuntu/.local/bin/agy)
+    const agyPath = path.join(os.homedir(), '.local', 'bin', 'agy');
 
     const runCli = () => new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) reject(stderr || error.message);
-        else resolve(stdout.trim());
+      // 2. exec 대신 execFile 사용. 인자를 배열로 넘겨 쉘 이스케이프 문제 원천 차단
+      execFile(agyPath, ['-p', promptText], (error, stdout, stderr) => {
+        if (error) {
+          reject(stderr || error.message);
+        } else {
+          resolve(stdout.trim());
+        }
       });
     });
 
