@@ -208,6 +208,41 @@ function App() {
     };
   }, []);
 
+  // [추가] 방 안(로비/게임)에서는 뒤로가기를 무시한다.
+  // 게임 중 실수로 브라우저 뒤로가기 / 모바일 뒤로가기 제스처를 눌러
+  // 방을 이탈하는 사고를 막기 위함. 나갈 때는 '나가기' 버튼을 쓴다.
+  const inRoom = view === 'lobby' || view === 'game';
+
+  useEffect(() => {
+    if (!inRoom) return;
+
+    // 뒤로가기를 흡수할 더미 히스토리 항목을 하나 쌓아둔다.
+    // (URL 인자를 생략하면 현재 주소가 그대로 유지된다 → 초대 링크 경로 보존)
+    const pushGuard = () => window.history.pushState({ backGuard: true }, '');
+    pushGuard();
+
+    // 뒤로가기가 발생하면 더미 항목을 다시 쌓아 원위치시킨다.
+    const onPopState = () => pushGuard();
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [inRoom]);
+
+  // [추가] 입력창 밖에서 누른 Backspace가 뒤로가기로 동작하는 것을 막는다.
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key !== 'Backspace') return;
+      const el = e.target;
+      const isTyping =
+        el?.isContentEditable ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(el?.tagName);
+      if (!isTyping) e.preventDefault();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const sortedScoreboard = useMemo(() => {
     const players = roomState?.players || {}; 
     return Object.entries(players).sort(([, playerA], [, playerB]) => playerB.score - playerA.score);
