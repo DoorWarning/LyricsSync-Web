@@ -117,7 +117,7 @@ exports.generateTranslation = async (req, res) => {
     
     const promptText = `당신은 옛날 구글 번역기입니다. 다음 규칙에 따라 번역하세요: ${rules} \n\n 원본 가사: ${originalLyrics}`;
     const safePrompt = JSON.stringify(promptText);
-    const command = `gemini ${safePrompt}`; 
+    const command = `agy -p ${safePrompt}`; 
 
     const runCli = () => new Promise((resolve, reject) => {
       exec(command, (error, stdout, stderr) => {
