@@ -1,5 +1,5 @@
 // sockets/socketHandler.js
-const { rooms, generateRoomCode, clearRoomTimers, startNewRound } = require('../controllers/gameLogic');
+const { rooms, roomTimers, generateRoomCode, clearRoomTimers, serializeRoom, startNewRound } = require('../controllers/gameLogic');
 const Song = require('../models/Song');
 
 const TOTAL_AVATARS = 15;
@@ -98,7 +98,7 @@ module.exports = function(io) {
     }
 
     // 6) 최종 방 상태 업데이트 전송
-    io.to(roomCode).emit('updateLobby', room);
+    io.to(roomCode).emit('updateLobby', serializeRoom(room));
     
     // 소켓 객체에서 방 코드 제거
     socket.roomCode = null;
@@ -136,13 +136,12 @@ module.exports = function(io) {
           currentArtistHint: null,
           roundStartTime: null,
           roundEndTime: null // [추가] 초기화
-        },
-        gameTimers: {}
+        }
       };
 
       socket.nickname = nickname;
       socket.roomCode = roomCode;
-      socket.emit('updateLobby', rooms[roomCode]);
+      socket.emit('updateLobby', serializeRoom(rooms[roomCode]));
     });
 
     // 2. 방 참가 (기존 동일)
@@ -166,7 +165,7 @@ module.exports = function(io) {
 
       const assignedAvatar = getAvailableAvatar(room);
       room.players[socket.id] = { nickname, score: 0, isReady: false, team: null, avatar: assignedAvatar }; 
-      io.to(roomCode).emit('updateLobby', room);
+      io.to(roomCode).emit('updateLobby', serializeRoom(room));
     });
 
     // 3. 팀 선택, 4. 설정 변경, 5. 준비 완료, 6. 게임 시작 (기존 동일)
@@ -179,7 +178,7 @@ module.exports = function(io) {
       if (teamCount >= maxPerTeam) return socket.emit('error', `${team}팀이 가득 찼습니다.`);
       player.team = team;
       player.isReady = false; 
-      io.to(socket.roomCode).emit('updateLobby', room);
+      io.to(socket.roomCode).emit('updateLobby', serializeRoom(room));
     });
 
     socket.on('updateSettings', (newSettings) => {
@@ -191,7 +190,7 @@ module.exports = function(io) {
         }
         if (newSettings.songCollections) room.settings.songCollections = newSettings.songCollections;
         else room.settings = { ...room.settings, ...newSettings };
-        io.to(socket.roomCode).emit('updateLobby', room);
+        io.to(socket.roomCode).emit('updateLobby', serializeRoom(room));
       }
     });
 
@@ -201,7 +200,7 @@ module.exports = function(io) {
       if (!room || !player) return;
       if (room.settings.isTeamMode && !player.team) return socket.emit('error', '먼저 팀을 선택해야 합니다.');
       player.isReady = !player.isReady;
-      io.to(socket.roomCode).emit('updateLobby', room);
+      io.to(socket.roomCode).emit('updateLobby', serializeRoom(room));
     });
 
     socket.on('startGame', async () => {
@@ -219,8 +218,15 @@ module.exports = function(io) {
         Object.values(room.players).forEach(p => p.score = 0);
         room.teamScores = { 'A': 0, 'B': 0 };
         const songTitles = await Song.find().select('title');
-        io.to(socket.roomCode).emit('gameStarted', { room, autocompleteList: songTitles.map(s => s.title) });
-        setTimeout(() => { startNewRound(io, socket.roomCode); }, 1000);
+        io.to(socket.roomCode).emit('gameStarted', { room: serializeRoom(room), autocompleteList: songTitles.map(s => s.title) });
+
+        // [수정] 이전 게임의 잔여 타이머를 정리하고, 시작 타이머도 추적 대상에 넣는다.
+        const startRoomCode = socket.roomCode;
+        clearRoomTimers(startRoomCode);
+        roomTimers[startRoomCode].startGameTimer = setTimeout(() => {
+          if (!rooms[startRoomCode]) return;
+          startNewRound(io, startRoomCode);
+        }, 1000);
       }
     });
 
@@ -259,7 +265,12 @@ module.exports = function(io) {
         if (room.settings.isTeamMode) io.to(roomCode).emit('updateTeamScoreboard', room.teamScores);
         else io.to(roomCode).emit('updatePlayers', room.players);
 
-        room.gameTimers.nextGameTimer = setTimeout(() => { startNewRound(io, roomCode); }, 5000);
+        // [수정] 타이머는 roomTimers에서만 관리한다. room 객체에 담으면
+        // updateLobby 등으로 통째 emit될 때 순환 참조로 파서가 무한 재귀한다.
+        roomTimers[roomCode].nextGameTimer = setTimeout(() => {
+          if (!rooms[roomCode]) return;
+          startNewRound(io, roomCode);
+        }, 5000);
 
       } else {
         const msg = room.settings.isTeamMode 

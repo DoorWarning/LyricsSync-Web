@@ -13,6 +13,14 @@ function generateRoomCode() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
+// [추가] 클라이언트로 내보낼 수 있는 필드만 추린다.
+// 타이머 핸들 등 직렬화 불가능한 값이 섞이면 socket.io-parser가 무한 재귀한다.
+function serializeRoom(room) {
+  if (!room) return null;
+  const { roomCode, hostId, players, settings, teamScores, gameState } = room;
+  return { roomCode, hostId, players, settings, teamScores, gameState };
+}
+
 function clearRoomTimers(roomName) {
   if (roomTimers[roomName]) {
     Object.values(roomTimers[roomName]).forEach(clearTimeout);
@@ -169,5 +177,6 @@ module.exports = {
   roomTimers,
   generateRoomCode,
   clearRoomTimers,
+  serializeRoom,
   startNewRound,
 };
